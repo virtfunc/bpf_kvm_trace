@@ -1,0 +1,3 @@
+msr_trace.skel.h
+vmlinux.h
+msr_trace.bpf.o
