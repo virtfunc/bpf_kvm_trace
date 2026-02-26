@@ -64,11 +64,11 @@ static void print_event(struct event *e, char prefix, unsigned long long current
     const char *mode = e->is_write ? "WR" : "RD";
 
     if (e->result == 0) {
-        printf("%c%sMSR: 0x%08x Value: 0x%016llx -> %u ms ago\n",
-               prefix, mode, e->msr, e->value, ago_ms);
+        printf("%c%sMSR: 0x%08x RIP: 0x%016llx Value: 0x%016llx -> %u ms ago\n",
+               prefix, mode, e->msr, e->rip, e->value, ago_ms);
     } else {
-        printf("%c%sMSR: 0x%08x Value: FAULT (Except #%2d) -> %u ms ago\n",
-               prefix, mode, e->msr, e->exception, ago_ms);
+        printf("%c%sMSR: 0x%08x RIP: 0x%016llx Value: FAULT (Except #%2d) -> %u ms ago\n",
+               prefix, mode, e->msr, e->rip, e->exception, ago_ms);
     }
 }
 

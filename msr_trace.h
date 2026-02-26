@@ -8,6 +8,7 @@ struct event {
     unsigned int is_write;
     unsigned int result; // 0 = OK, 1 = FAULT
     unsigned int exception;
+    unsigned long long rip;
 };
 
 #endif

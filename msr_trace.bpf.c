@@ -26,6 +26,15 @@ struct trace_event_raw_kvm_entry {
 	unsigned long rip;
 };
 
+struct trace_event_raw_kvm_exit {
+	struct trace_entry ent;
+	u32 exit_reason;
+	unsigned long rip;
+	u32 isa;
+	u64 info1;
+	u64 info2;
+};
+
 // Map to correlate kvm_msr with kvm_entry/kvm_inj_exception
 struct {
     __uint(type, BPF_MAP_TYPE_HASH);
@@ -48,6 +57,23 @@ struct {
     __type(value, u64);
 } dropped SEC(".maps");
 
+// Map to store RIP from kvm_exit
+struct {
+    __uint(type, BPF_MAP_TYPE_HASH);
+    __uint(max_entries, 10240);
+    __type(key, u32);
+    __type(value, u64);
+} exit_rip SEC(".maps");
+
+SEC("tracepoint/kvm/kvm_exit")
+int tp_kvm_exit(struct trace_event_raw_kvm_exit *args)
+{
+    u32 tid = bpf_get_current_pid_tgid();
+    u64 rip = args->rip;
+    bpf_map_update_elem(&exit_rip, &tid, &rip, BPF_ANY);
+    return 0;
+}
+
 SEC("tracepoint/kvm/kvm_msr")
 int tp_kvm_msr(struct trace_event_raw_kvm_msr *args)
 {
@@ -58,6 +84,14 @@ int tp_kvm_msr(struct trace_event_raw_kvm_msr *args)
     e.msr = args->ecx;
     e.value = args->data;
     e.is_write = args->write;
+
+    // try to get RIP from the preceding kvm_exit
+    // i have no idea if this will be correct but it should be
+    // in the ballpark.
+    u64 *rip = bpf_map_lookup_elem(&exit_rip, &tid);
+    if (rip) {
+        e.rip = *rip;
+    }
 
     bpf_map_update_elem(&pending, &tid, &e, BPF_ANY);
     return 0;
@@ -105,9 +139,16 @@ int tp_kvm_entry(struct trace_event_raw_kvm_entry *args)
 
     e = bpf_map_lookup_elem(&pending, &tid);
     if (e) {
+        // Only use the entry RIP (next instruction) if we failed to capture
+        // the exit RIP (current instruction).
+        if (e->rip == 0)
+            e->rip = args->rip;
         // Result 0 = OK
         submit_event(e, 0, 0);
         bpf_map_delete_elem(&pending, &tid);
     }
+
+    // Clean up exit_rip as we are re-entering the guest
+    bpf_map_delete_elem(&exit_rip, &tid);
     return 0;
 }
