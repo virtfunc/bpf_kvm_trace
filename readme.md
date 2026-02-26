@@ -1,6 +1,5 @@
 a simple sloppy program to trace the RD/WRMSR inside a KVM virtual machine using BPF.
 
-
 # build
 `$ ./build.sh`
 

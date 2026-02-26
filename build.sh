@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e
 
+# 0. Install dependencies for Arch Linux
+echo "Installing/updating dependencies..."
+sudo pacman -Syu --noconfirm clang gcc linux-headers libbpf elfutils zlib
+
 # 1. Generate vmlinux.h
 bpftool btf dump file /sys/kernel/btf/vmlinux format c > vmlinux.h
 
