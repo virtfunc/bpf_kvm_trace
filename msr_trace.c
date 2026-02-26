@@ -65,11 +65,11 @@ static void print_event(struct event *e, char prefix)
     const char *mode = e->is_write ? "WRITE" : "READ";
 
     if (e->result == 0) {
-        printf("%c[Time: %8u ms]  MSR: 0x%08x  Value: 0x%016llx  Mode: %-5s  Result: OK\n",
+        printf("%c[Time: %8u ms]  MSR: 0x%08x  Value: 0x%016llx  Mode: %-5s\n",
                prefix, elapsed_ms, e->msr, e->value, mode);
     } else {
-        printf("%c[Time: %8u ms]  MSR: 0x%08x  Value: 0x%016llx  Mode: %-5s  Result: FAULT (Exception %2d)\n",
-               prefix, elapsed_ms, e->msr, e->value, mode, e->exception);
+        printf("%c[Time: %8u ms]  MSR: 0x%08x  Value: FAULT (Except #%2d)  Mode: %-5s\n",
+               prefix, elapsed_ms, e->msr, e->exception, mode);
     }
 }
 
@@ -186,7 +186,7 @@ int main(int argc, char **argv)
     // to bpf_ktime_get_ns() for relative diffs.
     start_ts = get_ktime_ns();
 
-    printf("Tracing MSRs... Printing every 200ms.\n");
+    printf("Tracing MSRs...\n");
 
     int dropped_fd = bpf_map__fd(skel->maps.dropped);
     unsigned long long last_print_ts = get_ktime_ns();
