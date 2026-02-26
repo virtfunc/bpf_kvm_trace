@@ -63,14 +63,14 @@ static int handle_event(void *ctx, void *data, size_t data_sz)
 static void print_event(struct event *e, char prefix)
 {
     unsigned int elapsed_ms = (e->ts - start_ts) / 1000000;
-    const char *mode = e->is_write ? "WRITE" : "READ";
+    const char *mode = e->is_write ? "WR" : "RD";
 
     if (e->result == 0) {
-        printf("%c[Time: %8u ms]  MSR: 0x%08x  Value: 0x%016llx  Mode: %-5s\n",
-               prefix, elapsed_ms, e->msr, e->value, mode);
+        printf("%c[Time: %8u ms]  %sMSR: 0x%08x  Value: 0x%016llx\n",
+               prefix, elapsed_ms, mode, e->msr, e->value);
     } else {
-        printf("%c[Time: %8u ms]  MSR: 0x%08x  Value: FAULT (Except #%2d)  Mode: %-5s\n",
-               prefix, elapsed_ms, e->msr, e->exception, mode);
+        printf("%c[Time: %8u ms]  %sMSR: 0x%08x  Value: FAULT (Except #%2d)\n",
+               prefix, elapsed_ms, mode, e->msr, e->exception);
     }
 }
 
@@ -96,17 +96,21 @@ static void flush_events(void)
         // Sort unique_events by time descending (newest first)
         qsort(unique_events, unique_count, sizeof(struct event), cmp_event_ts_desc);
 
-        // Clear screen and move cursor to top
-        printf("\033[2J\033[H");
+        int is_tty = isatty(STDOUT_FILENO);
+        if (is_tty) {
+            // Clear screen and move cursor to top
+            printf("\033[2J\033[H");
+        }
 
         struct winsize w;
         int max_rows = unique_count;
-        if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) != -1 && w.ws_row > 1) {
+        if (is_tty && ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) != -1 && w.ws_row > 1) {
             if (max_rows > w.ws_row - 1)
                 max_rows = w.ws_row - 1;
         }
 
-        for (int i = 0; i < max_rows; i++) {
+        // If it's a TTY, print up to max_rows, otherwise print all unique events.
+        for (int i = 0; i < (is_tty ? max_rows : unique_count); i++) {
             print_event(&unique_events[i], '*');
         }
     } else {
