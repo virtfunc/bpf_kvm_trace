@@ -59,6 +59,20 @@ static int handle_event(void *ctx, void *data, size_t data_sz)
     return 0;
 }
 
+static void print_event(struct event *e, char prefix)
+{
+    unsigned int elapsed_ms = (e->ts - start_ts) / 1000000;
+    const char *mode = e->is_write ? "WRITE" : "READ";
+
+    if (e->result == 0) {
+        printf("%c[Time: %8u ms]  MSR: 0x%08x  Value: 0x%016llx  Mode: %-5s  Result: OK\n",
+               prefix, elapsed_ms, e->msr, e->value, mode);
+    } else {
+        printf("%c[Time: %8u ms]  MSR: 0x%08x  Value: 0x%016llx  Mode: %-5s  Result: FAULT (Exception %2d)\n",
+               prefix, elapsed_ms, e->msr, e->value, mode, e->exception);
+    }
+}
+
 static void flush_events(void)
 {
     if (dedupe_mode) {
@@ -85,17 +99,7 @@ static void flush_events(void)
         printf("\033[2J\033[H");
 
         for (int i = 0; i < unique_count; i++) {
-            struct event *e = &unique_events[i];
-            unsigned int elapsed_ms = (e->ts - start_ts) / 1000000;
-            const char *mode = e->is_write ? "WRITE" : "READ";
-
-            if (e->result == 0) {
-                printf("*[Time: %8u ms]  MSR: 0x%08x  Value: 0x%016llx  Mode: %-5s  Result: OK\n",
-                       elapsed_ms, e->msr, e->value, mode);
-            } else {
-                printf("*[Time: %8u ms]  MSR: 0x%08x  Value: 0x%016llx  Mode: %-5s  Result: FAULT (Exception %2d)\n",
-                       elapsed_ms, e->msr, e->value, mode, e->exception);
-            }
+            print_event(&unique_events[i], '*');
         }
     } else {
         // Default mode: print all buffered events
@@ -109,16 +113,7 @@ static void flush_events(void)
                 mark_seen(e->msr);
             }
 
-            unsigned int elapsed_ms = (e->ts - start_ts) / 1000000;
-            const char *mode = e->is_write ? "WRITE" : "READ";
-
-            if (e->result == 0) {
-                printf("%c[Time: %8u ms]  MSR: 0x%08x  Value: 0x%016llx  Mode: %-5s  Result: OK\n",
-                       prefix, elapsed_ms, e->msr, e->value, mode);
-            } else {
-                printf("%c[Time: %8u ms]  MSR: 0x%08x  Value: 0x%016llx  Mode: %-5s  Result: FAULT (Exception %2d)\n",
-                       prefix, elapsed_ms, e->msr, e->value, mode, e->exception);
-            }
+            print_event(e, prefix);
         }
     }
     buffered_count = 0;
