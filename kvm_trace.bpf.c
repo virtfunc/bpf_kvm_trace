@@ -88,7 +88,7 @@ int tp_kvm_msr(struct trace_event_raw_kvm_msr *args) {
     e.index = args->ecx;
     e.value = args->data;
     e.type = args->write;
-    e.kind = 0; // MSR
+    e.kind = EVENT_KIND_MSR;
     u64 *rip = bpf_map_lookup_elem(&exit_rip, &tid);
     if (rip) e.rip = *rip;
     bpf_map_update_elem(&pending_msr, &tid, &e, BPF_ANY);
@@ -133,7 +133,7 @@ int tp_kvm_cpuid(struct trace_event_raw_kvm_cpuid *args) {
     e.index = args->func;
     e.value = (u64)args->eax | ((u64)args->ebx << 32);
     e.value_extra = (u64)args->ecx | ((u64)args->edx << 32);
-    e.kind = 1; // CPUID
+    e.kind = EVENT_KIND_CPUID;
     u32 tid = bpf_get_current_pid_tgid();
     u64 *rip = bpf_map_lookup_elem(&exit_rip, &tid);
     if (rip) e.rip = *rip;

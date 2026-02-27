@@ -10,7 +10,10 @@ struct event {
     unsigned long long value;
     unsigned long long value_extra;
     unsigned int type;       // Generic type (e.g., 0=RD, 1=WR)
-    unsigned int kind;       // 0=MSR, 1=CPUID
+    enum event_kind {
+        EVENT_KIND_MSR = 0,
+        EVENT_KIND_CPUID = 1,
+    } kind; // 0=MSR, 1=CPUID
     unsigned int result;     // 0 = OK, 1 = FAULT
     unsigned int exception;
     unsigned long long rip;

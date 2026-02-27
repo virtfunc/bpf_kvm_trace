@@ -4,11 +4,15 @@ a simple sloppy program to trace the RD/WRMSR inside a KVM virtual machine using
 `$ ./build.sh`
 
 # dedupe mode
+works with msr and cpuid trace modes.
 `# kvm_trace -d`
 
-# default mode
-`# kvm_trace`
+# cpuid mode
+`# kvm_trace -c`
 
-# simple shell script, log only
+# msr mode
+`# kvm_trace -m`
+
+# simple shell script (older)
 
 `# ./msr_trace_kvm.sh`
