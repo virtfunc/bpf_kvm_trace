@@ -1,5 +1,6 @@
-msr_trace.skel.h
+*.skel.h
 vmlinux.h
-msr_trace.bpf.o
+*.bpf.o
+cpuid_trace
 msr_trace
 msr_trace.log
