@@ -3,8 +3,7 @@ a simple sloppy program to trace the RD/WRMSR and CPUID inside a KVM virtual mac
 # build
 `$ ./build.sh`
 
-# dedupe mode
-works with msr and cpuid trace modes.
+# dedupe mode (works with msr and cpuid trace modes)
 `# kvm_trace -d`
 
 # cpuid mode
