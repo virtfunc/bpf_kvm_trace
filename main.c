@@ -5,6 +5,7 @@
 #include <bpf/libbpf.h>
 #include <getopt.h>
 #include <sys/ioctl.h>
+#include <bpf/bpf.h>
 #include "trace.h"
 
 #define MAX_SEEN_INDICES 4096
@@ -114,16 +115,27 @@ static unsigned long long get_ktime_ns(void)
 int main(int argc, char **argv)
 {
     struct ring_buffer *rb = NULL;
+    int flags = 0;
     int err;
-    static struct option long_options[] = {{"dedupe", no_argument, 0, 'd'}, {0, 0, 0, 0}};
+    static struct option long_options[] = {
+        {"dedupe", no_argument, 0, 'd'},
+        {"msr", no_argument, 0, 'm'},
+        {"cpuid", no_argument, 0, 'c'},
+        {0, 0, 0, 0}
+    };
     int opt;
-    while ((opt = getopt_long(argc, argv, "d", long_options, NULL)) != -1) {
-        if (opt == 'd') dedupe_mode = 1;
+    while ((opt = getopt_long(argc, argv, "dmc", long_options, NULL)) != -1) {
+        switch (opt) {
+        case 'd': dedupe_mode = 1; break;
+        case 'm': flags |= TRACE_MSR; break;
+        case 'c': flags |= TRACE_CPUID; break;
+        }
     }
 
+    if (flags == 0) flags = TRACE_MSR; // Default to MSR
     libbpf_set_print(NULL);
 
-    rb = trace_init_rb(handle_event);
+    rb = trace_init_rb(handle_event, flags);
     if (!rb) return 1;
 
     printf("Tracing...\n");
@@ -146,6 +158,15 @@ int main(int argc, char **argv)
             flush_events(now);
             fprintf(stderr, "\nError: Lost %llu events (userspace buffer full)\n", userspace_drops);
             break;
+        }
+
+        __u32 key = 0;
+        __u64 val = 0;
+        if (dropped_fd >= 0 && bpf_map_lookup_elem(dropped_fd, &key, &val) == 0) {
+            if (val > 0) {
+                fprintf(stderr, "\nError: Lost %llu events (ring buffer full)\n", (unsigned long long)val);
+                break;
+            }
         }
     }
     trace_cleanup();
