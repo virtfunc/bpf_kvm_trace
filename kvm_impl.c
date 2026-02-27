@@ -14,13 +14,13 @@ struct ring_buffer *trace_init_rb(handle_event_t handler, int flags)
 
     skel = kvm_trace_bpf__open();
     if (!skel) {
-        fprintf(stderr, "Failed to open BPF skeleton\n");
+        fprintf(stderr, "Failed to open BPF skeleton (Do you have permissions?)\n");
         return NULL;
     }
 
     err = kvm_trace_bpf__load(skel);
     if (err) {
-        fprintf(stderr, "Failed to load BPF skeleton\n");
+        fprintf(stderr, "Failed to load BPF skeleton (Do you have permissions?)\n");
         kvm_trace_bpf__destroy(skel);
         return NULL;
     }
@@ -76,7 +76,7 @@ void trace_print(struct event *e, char prefix, unsigned long long current_time_n
         } 
     } else if (e->kind == EVENT_KIND_CPUID) {
         printf("%cCPUID Leaf: 0x%08x RIP: 0x%016llx ", prefix, e->index, e->rip);
-        printf("       EAX: 0x%08llx EBX: 0x%08llx ECX: 0x%08llx EDX: 0x%08llx -> %u ms ago\n",
+        printf(" EAX: 0x%08llx EBX: 0x%08llx ECX: 0x%08llx EDX: 0x%08llx -> %u ms ago\n",
                e->value & 0xFFFFFFFF, e->value >> 32, e->value_extra & 0xFFFFFFFF, e->value_extra >> 32, ago_ms);
     }
 }
