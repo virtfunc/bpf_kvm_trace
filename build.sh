@@ -23,4 +23,4 @@ bpftool gen skeleton kvm_trace.bpf.o > kvm_trace.skel.h
 clang -g -O2 -Wall main.c kvm_impl.c -lbpf -lelf -lz -o kvm_trace
 
 # 5. Run
-sudo ./kvm_trace -d -m -c
+sudo ./kvm_trace -d -c

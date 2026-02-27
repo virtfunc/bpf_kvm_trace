@@ -112,6 +112,16 @@ static unsigned long long get_ktime_ns(void)
     return (unsigned long long)ts.tv_sec * 1000000000ull + ts.tv_nsec;
 }
 
+static void usage(const char *prog)
+{
+    fprintf(stderr, "Usage: %s [options]\n", prog);
+    fprintf(stderr, "\nOptions:\n");
+    fprintf(stderr, "  -m, --msr      Trace MSR instructions\n");
+    fprintf(stderr, "  -c, --cpuid    Trace CPUID instructions\n");
+    fprintf(stderr, "  -d, --dedupe   Deduplicate events (top-like view)\n");
+    fprintf(stderr, "  -h, --help     Show this help message\n");
+}
+
 int main(int argc, char **argv)
 {
     struct ring_buffer *rb = NULL;
@@ -121,18 +131,24 @@ int main(int argc, char **argv)
         {"dedupe", no_argument, 0, 'd'},
         {"msr", no_argument, 0, 'm'},
         {"cpuid", no_argument, 0, 'c'},
+        {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
     int opt;
-    while ((opt = getopt_long(argc, argv, "dmc", long_options, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "dmch", long_options, NULL)) != -1) {
         switch (opt) {
         case 'd': dedupe_mode = 1; break;
         case 'm': flags |= TRACE_MSR; break;
         case 'c': flags |= TRACE_CPUID; break;
+        case 'h': usage(argv[0]); return 0;
+        default: usage(argv[0]); return 1;
         }
     }
 
-    if (flags == 0) flags = TRACE_MSR; // Default to MSR
+    if (flags == 0) {
+        usage(argv[0]);
+        return 1;
+    }
     libbpf_set_print(NULL);
 
     rb = trace_init_rb(handle_event, flags);
