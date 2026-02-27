@@ -1,7 +1,7 @@
 #include "vmlinux.h"
 #include <bpf/bpf_helpers.h>
 #include <bpf/bpf_tracing.h>
-#include "msr_trace.h"
+#include "trace.h"
 
 char LICENSE[] SEC("license") = "GPL";
 
@@ -81,9 +81,9 @@ int tp_kvm_msr(struct trace_event_raw_kvm_msr *args)
     struct event e = {};
 
     e.ts = bpf_ktime_get_ns();
-    e.msr = args->ecx;
+    e.index = args->ecx;
     e.value = args->data;
-    e.is_write = args->write;
+    e.type = args->write;
 
     // try to get RIP from the preceding kvm_exit
     // i have no idea if this will be correct but it should be
