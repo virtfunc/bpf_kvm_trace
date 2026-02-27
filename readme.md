@@ -4,10 +4,10 @@ a simple sloppy program to trace the RD/WRMSR inside a KVM virtual machine using
 `$ ./build.sh`
 
 # dedupe mode
-`# msr_trace -d`
+`# kvm_trace -d`
 
 # default mode
-`# msr_trace`
+`# kvm_trace`
 
 # simple shell script, log only
 

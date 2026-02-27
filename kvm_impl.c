@@ -67,10 +67,15 @@ void trace_print(struct event *e, char prefix, unsigned long long current_time_n
     
     if (e->kind == 0) { // MSR
         const char *mode = e->type ? "WR" : "RD";
-        printf("%c%sMSR: 0x%08x RIP: 0x%016llx Value: 0x%016llx %s -> %u ms ago\n",
-               prefix, mode, e->index, e->rip, e->value, e->result ? "(FAULT)" : "", ago_ms);
+        if (e->result) {
+            printf("%c%sMSR: 0x%08x RIP: 0x%016llx Value: FAULT (Except #%d) -> %u ms ago\n",
+                   prefix, mode, e->index, e->rip, e->exception, ago_ms);
+        } else {
+            printf("%c%sMSR: 0x%08x RIP: 0x%016llx Value: 0x%016llx -> %u ms ago\n",
+                   prefix, mode, e->index, e->rip, e->value, ago_ms);
+        }
     } else if (e->kind == 1) { // CPUID
-        printf("%cCPUID Leaf: 0x%08x RIP: 0x%016llx\n", prefix, e->index, e->rip);
+        printf("%cCPUID Leaf: 0x%08x RIP: 0x%016llx ", prefix, e->index, e->rip);
         printf("       EAX: 0x%08llx EBX: 0x%08llx ECX: 0x%08llx EDX: 0x%08llx -> %u ms ago\n",
                e->value & 0xFFFFFFFF, e->value >> 32, e->value_extra & 0xFFFFFFFF, e->value_extra >> 32, ago_ms);
     }
