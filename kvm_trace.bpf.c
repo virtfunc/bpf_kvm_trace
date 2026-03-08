@@ -38,10 +38,10 @@ struct trace_event_raw_kvm_exit {
 struct trace_event_raw_kvm_cpuid {
     struct trace_entry ent;
     u32 func;
-    u32 eax;
-    u32 ebx;
-    u32 ecx;
-    u32 edx;
+    u64 eax;
+    u64 ebx;
+    u64 ecx;
+    u64 edx;
     bool found;
 };
 
@@ -131,8 +131,8 @@ int tp_kvm_cpuid(struct trace_event_raw_kvm_cpuid *args) {
     struct event e = {};
     e.ts = bpf_ktime_get_ns();
     e.index = args->func;
-    e.value = (u64)args->eax | ((u64)args->ebx << 32);
-    e.value_extra = (u64)args->ecx | ((u64)args->edx << 32);
+    e.value = (u64)(u32)args->eax | ((u64)(u32)args->ebx << 32);
+    e.value_extra = (u64)(u32)args->ecx | ((u64)(u32)args->edx << 32);
     e.kind = EVENT_KIND_CPUID;
     u32 tid = bpf_get_current_pid_tgid();
     u64 *rip = bpf_map_lookup_elem(&exit_rip, &tid);
