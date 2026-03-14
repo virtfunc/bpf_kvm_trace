@@ -7,12 +7,12 @@ CFLAGS := -g -O2 -Wall
 LDFLAGS := -lbpf -lelf -lz
 
 # BPF specific flags
-BPF_CFLAGS := -g -O2 -target bpf -D__TARGET_ARCH_x86
+BPF_CFLAGS := -g -O2 -target bpf -D__TARGET_ARCH_x86 -Wno-missing-declarations
 
 # Source and object files
 TARGET := kvm_trace
 USER_SRCS := main.c kvm_impl.c
-USER_HDRS := msr_names.h trace.h
+USER_HDRS := msr_names.h trace.h cpuid_names.h
 BPF_C_SRC := kvm_trace.bpf.c
 BPF_C_OBJ := $(BPF_C_SRC:.bpf.c=.bpf.o)
 SKELETON := $(BPF_C_SRC:.bpf.c=.skel.h)
