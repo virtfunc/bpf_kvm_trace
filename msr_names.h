@@ -11,20 +11,20 @@ struct msr_def {
 
 static const struct msr_def msr_names[] = {
     /* Standard x86 MSRs */
-    { 0x00000000, "MSR_IA32_P5_MC_ADDR" }, // should return 0 on the metal, legacy now undocumented on amd.
-    { 0x00000010, "MSR_IA32_TSC" },
-    { 0x0000001B, "MSR_IA32_APIC_BASE" },
-    { 0x0000003A, "MSR_IA32_FEATURE_CONTROL" }, // doesn't exist on AMD.
-    { 0x0000008B, "MSR_IA32_BIOS_SIGN_ID" }, // microcode version.
-    { 0x000000FE, "MSR_IA32_MTRR_CAP" },
-    { 0x0000010A, "MSR_IA32_ARCH_CAPABILITIES" }, // if you are exposing this on AMD, you shouldn't be.
-    { 0x00000174, "MSR_IA32_SYSENTER_CS" },
-    { 0x00000175, "MSR_IA32_SYSENTER_ESP" },
-    { 0x00000176, "MSR_IA32_SYSENTER_EIP" },
+    { 0x00000000, "MSR_P5_MC_ADDR" }, // should return 0 on the metal, legacy now undocumented on amd.
+    { 0x00000010, "MSR_TSC" },
+    { 0x0000001B, "MSR_APIC_BASE" },
+    { 0x0000003A, "MSR_FEATURE_CONTROL" }, // doesn't exist on AMD.
+    { 0x0000008B, "MSR_BIOS_SIGN_ID" }, // microcode version.
+    { 0x000000FE, "MSR_MTRR_CAP" },
+    { 0x0000010A, "MSR_ARCH_CAPABILITIES" }, // if you are exposing this on AMD, you shouldn't be.
+    { 0x00000174, "MSR_SYSENTER_CS" },
+    { 0x00000175, "MSR_SYSENTER_ESP" },
+    { 0x00000176, "MSR_SYSENTER_EIP" },
     { 0x00000179, "MSR_MCG_CAP" },
     { 0x0000017A, "MSR_MCG_STATUS" },
     { 0x0000017B, "MSR_MCG_CTL" },
-    { 0x000001A0, "MSR_IA32_MISC_ENABLE" }, // doesn't exist on AMD.
+    { 0x000001A0, "MSR_MISC_ENABLE" }, // doesn't exist on AMD.
 
     /* Software Debug MSR */
     { 0x000001D9, "MSR_DEBUGCTL" },
@@ -34,19 +34,28 @@ static const struct msr_def msr_names[] = {
     { 0x000001DE, "MSR_LAST_INT_TO_IP" },
 
     /* MTRRs */
-    { 0x00000250, "MSR_IA32_MTRR_FIX64K_00000" },
-    { 0x00000258, "MSR_IA32_MTRR_FIX16K_80000" },
-    { 0x00000259, "MSR_IA32_MTRR_FIX16K_A0000" },
-    { 0x00000268, "MSR_IA32_MTRR_FIX4K_C0000" },
-    { 0x00000269, "MSR_IA32_MTRR_FIX4K_C8000" },
-    { 0x0000026A, "MSR_IA32_MTRR_FIX4K_D0000" },
-    { 0x0000026B, "MSR_IA32_MTRR_FIX4K_D8000" },
-    { 0x0000026C, "MSR_IA32_MTRR_FIX4K_E0000" },
-    { 0x0000026D, "MSR_IA32_MTRR_FIX4K_E8000" },
-    { 0x0000026E, "MSR_IA32_MTRR_FIX4K_F0000" },
-    { 0x0000026F, "MSR_IA32_MTRR_FIX4K_F8000" },
-    { 0x00000277, "MSR_IA32_CR_PAT" },
-    { 0x000002FF, "MSR_IA32_MTRR_DEF_TYPE" },
+    { 0x00000201, "MSR_MTRR_PHYS_MASK0" },
+    { 0x00000203, "MSR_MTRR_PHYS_MASK1" },
+    { 0x00000205, "MSR_MTRR_PHYS_MASK2" },
+    { 0x00000207, "MSR_MTRR_PHYS_MASK3" },
+    { 0x00000209, "MSR_MTRR_PHYS_MASK4" },
+    { 0x0000020B, "MSR_MTRR_PHYS_MASK5" },
+    { 0x0000020D, "MSR_MTRR_PHYS_MASK6" },
+    { 0x0000020F, "MSR_MTRR_PHYS_MASK7" },
+
+    { 0x00000250, "MSR_MTRR_FIX64K_00000" },
+    { 0x00000258, "MSR_MTRR_FIX16K_80000" },
+    { 0x00000259, "MSR_MTRR_FIX16K_A0000" },
+    { 0x00000268, "MSR_MTRR_FIX4K_C0000" },
+    { 0x00000269, "MSR_MTRR_FIX4K_C8000" },
+    { 0x0000026A, "MSR_MTRR_FIX4K_D0000" },
+    { 0x0000026B, "MSR_MTRR_FIX4K_D8000" },
+    { 0x0000026C, "MSR_MTRR_FIX4K_E0000" },
+    { 0x0000026D, "MSR_MTRR_FIX4K_E8000" },
+    { 0x0000026E, "MSR_MTRR_FIX4K_F0000" },
+    { 0x0000026F, "MSR_MTRR_FIX4K_F8000" },
+    { 0x00000277, "MSR_PAT" },
+    { 0x000002FF, "MSR_MTRR_DEF_TYPE" },
 
     /* Hyper-V MSRs */
     { 0x40000000, "HV_X64_MSR_GUEST_OS_ID" },
@@ -136,6 +145,13 @@ static const struct msr_def msr_names[] = {
     { 0xC0010033, "MSR_PROCESSOR_NAME_STRING4"},
     { 0xC0010034, "MSR_PROCESSOR_NAME_STRING5"},
     { 0xC0010035, "MSR_PROCESSOR_NAME_STRING6"},
+    { 0xC0010056, "MSR_SMI_TRIGGER_IO_CYCLE"},
+    { 0xC0010061, "MSR_PSTATE_CURRENT_LIMIT"},
+    { 0xC0010062, "MSR_PSTATE_CONTROL"},
+    { 0xC0010063, "MSR_PSTATE_STATUS"},
+    { 0xC0010074, "MSR_CPU_WATCHDOG_TIMER"},
+
+    { 0xC0010104, "MSR_TSC_RATIO"},
     { 0xC0010114, "MSR_VM_CR" },
 
     { 0xC0011029, "MSR_F10H_DECFG" }, //interesting msr to see if LFENCE is serializing on AMD
@@ -162,9 +178,9 @@ static inline const char *get_msr_name(unsigned int index)
         static char mtrr_name[32];
         unsigned int bank = (index - 0x200) / 2;
         if (index % 2 == 0) {
-            snprintf(mtrr_name, sizeof(mtrr_name), "MSR_IA32_MTRR_PHYSBASE%u", bank);
+            snprintf(mtrr_name, sizeof(mtrr_name), "MSR_MTRR_PHYSBASE%u", bank);
         } else {
-            snprintf(mtrr_name, sizeof(mtrr_name), "MSR_IA32_MTRR_PHYSMASK%u", bank);
+            snprintf(mtrr_name, sizeof(mtrr_name), "MSR_MTRR_PHYSMASK%u", bank);
         }
         return mtrr_name;
     }
@@ -183,7 +199,7 @@ static inline const char *get_msr_name(unsigned int index)
             case 3: type_name = "MISC"; break;
             default: type_name = "???"; break; // Should not happen
         }
-        snprintf(mc_msr_name, sizeof(mc_msr_name), "MSR_IA32_MC%u_%s", bank, type_name);
+        snprintf(mc_msr_name, sizeof(mc_msr_name), "MSR_MC%u_%s", bank, type_name);
         return mc_msr_name;
     }
 
