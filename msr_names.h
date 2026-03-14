@@ -1,6 +1,7 @@
 #ifndef __MSR_NAMES_H
 #define __MSR_NAMES_H
 
+#include <stdio.h>
 #include <stddef.h>
 
 struct msr_def {
@@ -111,6 +112,24 @@ static inline const char *get_msr_name(unsigned int index)
         }
     }
     
+    // Machine Check Architecture MSRs (IA32_MCi_*)
+    if (index >= 0x400 && index < (0x400 + 4 * 32)) { // Support up to 32 MC banks
+        static char mc_msr_name[32];
+        unsigned int bank = (index - 0x400) / 4;
+        unsigned int type = index % 4;
+        const char *type_name;
+
+        switch (type) {
+            case 0: type_name = "CTL"; break;
+            case 1: type_name = "STATUS"; break;
+            case 2: type_name = "ADDR"; break;
+            case 3: type_name = "MISC"; break;
+            default: type_name = "???"; break; // Should not happen
+        }
+        snprintf(mc_msr_name, sizeof(mc_msr_name), "MSR_IA32_MC%u_%s", bank, type_name);
+        return mc_msr_name;
+    }
+
     if (index >= 0x40000000 && index <= 0x4000FFFF) return "HV_UNKNOWN";
     if (index >= 0x4b564d00 && index <= 0x4b564dFF) return "KVM_UNKNOWN";
     
