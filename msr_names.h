@@ -15,7 +15,9 @@ static const struct msr_def msr_names[] = {
     { 0x00000010, "MSR_IA32_TSC" },
     { 0x0000001B, "MSR_IA32_APICBASE" },
     { 0x0000003A, "MSR_IA32_FEATURE_CONTROL" },
+    { 0x0000008B, "MSR_IA32_BIOS_SIGN_ID" }, // microcode version.
     { 0x000000FE, "MSR_IA32_MTRRCAP" },
+    { 0x0000010A, "MSR_IA32_ARCH_CAPABILITIES" }, // if you are exposing this on amd, you shouldn't be.
     { 0x00000174, "MSR_IA32_SYSENTER_CS" },
     { 0x00000175, "MSR_IA32_SYSENTER_ESP" },
     { 0x00000176, "MSR_IA32_SYSENTER_EIP" },
@@ -118,7 +120,13 @@ static const struct msr_def msr_names[] = {
     { 0xC0000101, "MSR_GS_BASE" },
     { 0xC0000102, "MSR_KERNEL_GS_BASE" },
     { 0xC0000103, "MSR_TSC_AUX" },
+    { 0xC0010000, "MSR_K7_EVNTSEL0" },
+    { 0xC0010001, "MSR_K7_EVNTSEL1" },
+    { 0xC0010002, "MSR_K7_EVNTSEL2" },
+    { 0xC0010003, "MSR_K7_EVNTSEL3" },
     { 0xC0010010, "MSR_SYSCFG" },
+    { 0xC0010114, "MSR_VM_CR" },
+    { 0xC0011029, "MSR_F10H_DECFG" },
 };
 
 static inline const char *get_msr_name(unsigned int index)
