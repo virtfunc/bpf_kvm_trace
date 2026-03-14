@@ -39,14 +39,16 @@ $(BPF_C_OBJ): $(BPF_C_SRC) $(VMLINUX_H) trace.h
 $(VMLINUX_H):
 	bpftool btf dump file /sys/kernel/btf/vmlinux format c > $@
 
-# Clean up generated files
+# clean up generated files
 clean:
 	rm -f $(TARGET) $(BPF_C_OBJ) $(SKELETON) $(VMLINUX_H)
 
-# Example run command (requires sudo)
-run: all
+run: all #assumes sudo
 	sudo ./$(TARGET) -dm
 
-# Install dependencies for Arch Linux (requires sudo)
+run_simple: all # assumes sudo
+	sudo ./$(TARGET) -dm --no-mtrr --no-mc
+
+# install deps for arch, assumes sudo
 install-deps:
 	sudo pacman -Syu --noconfirm clang gcc linux-headers libbpf elfutils zlib

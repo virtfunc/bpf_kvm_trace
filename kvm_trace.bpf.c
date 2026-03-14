@@ -5,6 +5,9 @@
 
 char LICENSE[] SEC("license") = "GPL";
 
+volatile const bool no_mtrr_msrs = false;
+volatile const bool no_mc_msrs = false;
+
 struct trace_event_raw_kvm_msr {
     struct trace_entry ent;
     u8 write;
@@ -82,10 +85,26 @@ int tp_kvm_exit(struct trace_event_raw_kvm_exit *args) {
 
 SEC("tracepoint/kvm/kvm_msr")
 int tp_kvm_msr(struct trace_event_raw_kvm_msr *args) {
+	u32 index = args->ecx;
+
+	if (no_mtrr_msrs) {
+		// MSR_MTRR_CAP, MSR_PAT, MSR_MTRR_DEF_TYPE, and ranges for variable and fixed MTRRs
+		if ((index >= 0x200 && index <= 0x2FF) || index == 0xFE) {
+			return 0;
+		}
+	}
+
+	if (no_mc_msrs) {
+		// MCG_CAP, MCG_STATUS, MCG_CTL and MCi_* banks
+		if ((index >= 0x179 && index <= 0x17B) || (index >= 0x400 && index < (0x400 + 4 * 32))) {
+			return 0;
+		}
+	}
+
     u32 tid = bpf_get_current_pid_tgid();
     struct event e = {};
     e.ts = bpf_ktime_get_ns();
-    e.index = args->ecx;
+	e.index = index;
     e.value = args->data;
     e.type = args->write;
     e.kind = EVENT_KIND_MSR;

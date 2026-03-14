@@ -17,6 +17,8 @@ static struct event buffered_events[MAX_BUFFERED_EVENTS];
 static int buffered_count = 0;
 static unsigned long long userspace_drops = 0;
 static int dedupe_mode = 0;
+static int disable_mtrr = 0;
+static int disable_mc = 0;
 
 static struct event unique_events[MAX_SEEN_INDICES];
 static int unique_count = 0;
@@ -119,6 +121,8 @@ static void usage(const char *prog)
     fprintf(stderr, "  -m, --msr      Trace MSR instructions\n");
     fprintf(stderr, "  -c, --cpuid    Trace CPUID instructions\n");
     fprintf(stderr, "  -d, --dedupe   Deduplicate events (top-like view)\n");
+    fprintf(stderr, "      --no-mtrr  Do not log MTRR MSRs\n");
+    fprintf(stderr, "      --no-mc    Do not log Machine Check MSRs\n");
     fprintf(stderr, "  -h, --help     Show this help message\n");
 }
 
@@ -132,6 +136,8 @@ int main(int argc, char **argv)
         {"msr", no_argument, 0, 'm'},
         {"cpuid", no_argument, 0, 'c'},
         {"help", no_argument, 0, 'h'},
+        {"no-mtrr", no_argument, 0, 1001},
+        {"no-mc", no_argument, 0, 1002},
         {0, 0, 0, 0}
     };
     int opt;
@@ -141,6 +147,8 @@ int main(int argc, char **argv)
         case 'm': flags |= TRACE_MSR; break;
         case 'c': flags |= TRACE_CPUID; break;
         case 'h': usage(argv[0]); return 0;
+        case 1001: disable_mtrr = 1; break;
+        case 1002: disable_mc = 1; break;
         default: usage(argv[0]); return 1;
         }
     }
@@ -151,7 +159,7 @@ int main(int argc, char **argv)
     }
     libbpf_set_print(NULL);
 
-    rb = trace_init_rb(handle_event, flags);
+    rb = trace_init_rb(handle_event, flags, disable_mtrr, disable_mc);
     if (!rb) return 1;
 
     printf("Tracing...\n");

@@ -9,7 +9,7 @@
 static struct kvm_trace_bpf *skel = NULL;
 static struct ring_buffer *rb = NULL;
 
-struct ring_buffer *trace_init_rb(handle_event_t handler, int flags)
+struct ring_buffer *trace_init_rb(handle_event_t handler, int flags, int no_mtrr, int no_mc)
 {
     int err;
 
@@ -18,6 +18,9 @@ struct ring_buffer *trace_init_rb(handle_event_t handler, int flags)
         fprintf(stderr, "Failed to open BPF skeleton (Do you have permissions?)\n");
         return NULL;
     }
+
+    skel->rodata->no_mtrr_msrs = no_mtrr;
+    skel->rodata->no_mc_msrs = no_mc;
 
     err = kvm_trace_bpf__load(skel);
     if (err) {
