@@ -21,11 +21,17 @@ static const struct msr_def msr_names[] = {
     { 0x00000174, "MSR_IA32_SYSENTER_CS" },
     { 0x00000175, "MSR_IA32_SYSENTER_ESP" },
     { 0x00000176, "MSR_IA32_SYSENTER_EIP" },
-    { 0x000001A0, "MSR_IA32_MISC_ENABLE" },
-    { 0x00000277, "MSR_IA32_CR_PAT" },
     { 0x00000179, "MSR_MCG_CAP" },
     { 0x0000017A, "MSR_MCG_STATUS" },
     { 0x0000017B, "MSR_MCG_CTL" },
+    { 0x000001A0, "MSR_IA32_MISC_ENABLE" },
+
+    /* Software Debug MSR */
+    { 0x000001D9, "MSR_DEBUGCTL" },
+    { 0x000001DB, "MSR_LASTBRANCHFROMIP" },
+    { 0x000001DC, "MSR_LASTBRANCHTOIP" },
+    { 0x000001DD, "MSR_LASTINTFROMIP" },
+    { 0x000001DE, "MSR_LASTINTTOIP" },
 
     /* MTRRs */
     { 0x00000250, "MSR_IA32_MTRR_FIX64K_00000" },
@@ -39,30 +45,8 @@ static const struct msr_def msr_names[] = {
     { 0x0000026D, "MSR_IA32_MTRR_FIX4K_E8000" },
     { 0x0000026E, "MSR_IA32_MTRR_FIX4K_F0000" },
     { 0x0000026F, "MSR_IA32_MTRR_FIX4K_F8000" },
+    { 0x00000277, "MSR_IA32_CR_PAT" },
     { 0x000002FF, "MSR_IA32_MTRR_DEF_TYPE" },
-
-    /* Software Debug MSR */
-    { 0x000001D9, "MSR_DEBUGCTL" },
-    { 0x000001DB, "MSR_LASTBRANCHFROMIP" },
-    { 0x000001DC, "MSR_LASTBRANCHTOIP" },
-    { 0x000001DD, "MSR_LASTINTFROMIP" },
-    { 0x000001DE, "MSR_LASTINTTOIP" },
-    { 0xC0001027, "DR0_ADDR_MASK" },
-    { 0xC0001019, "DR1_ADDR_MASK" },
-    { 0xC000101A, "DR2_ADDR_MASK" },
-    { 0xC000101B, "DR3_ADDR_MASK" },
-
-
-
-    /* KVM MSRs */
-    { 0x4b564d00, "MSR_KVM_WALL_CLOCK" },
-    { 0x4b564d01, "MSR_KVM_SYSTEM_TIME" },
-    { 0x4b564d02, "MSR_KVM_ASYNC_PF_EN" },
-    { 0x4b564d03, "MSR_KVM_STEAL_TIME" },
-    { 0x4b564d04, "MSR_KVM_PV_EOI_EN" },
-    { 0x4b564d05, "MSR_KVM_POLL_CONTROL" },
-    { 0x4b564d06, "MSR_KVM_ASYNC_PF_INT" },
-    { 0x4b564d07, "MSR_KVM_ASYNC_PF_ACK" },
 
     /* Hyper-V MSRs */
     { 0x40000000, "HV_X64_MSR_GUEST_OS_ID" },
@@ -110,6 +94,16 @@ static const struct msr_def msr_names[] = {
     { 0x40000114, "HV_X64_MSR_CRASH_P4" },
     { 0x40000115, "HV_X64_MSR_CRASH_CTL" },
 
+    /* KVM MSRs */
+    { 0x4b564d00, "MSR_KVM_WALL_CLOCK" },
+    { 0x4b564d01, "MSR_KVM_SYSTEM_TIME" },
+    { 0x4b564d02, "MSR_KVM_ASYNC_PF_EN" },
+    { 0x4b564d03, "MSR_KVM_STEAL_TIME" },
+    { 0x4b564d04, "MSR_KVM_PV_EOI_EN" },
+    { 0x4b564d05, "MSR_KVM_POLL_CONTROL" },
+    { 0x4b564d06, "MSR_KVM_ASYNC_PF_INT" },
+    { 0x4b564d07, "MSR_KVM_ASYNC_PF_ACK" },
+
     /* AMD / Common MSRs */
     { 0xC0000080, "MSR_EFER" },
     { 0xC0000081, "MSR_STAR" },
@@ -120,20 +114,32 @@ static const struct msr_def msr_names[] = {
     { 0xC0000101, "MSR_GS_BASE" },
     { 0xC0000102, "MSR_KERNEL_GS_BASE" },
     { 0xC0000103, "MSR_TSC_AUX" },
+    { 0xC0001019, "DR1_ADDR_MASK" },
+    { 0xC000101A, "DR2_ADDR_MASK" },
+    { 0xC000101B, "DR3_ADDR_MASK" },
+    { 0xC0001027, "DR0_ADDR_MASK" },
     { 0xC0010000, "MSR_K7_EVNTSEL0" },
     { 0xC0010001, "MSR_K7_EVNTSEL1" },
     { 0xC0010002, "MSR_K7_EVNTSEL2" },
     { 0xC0010003, "MSR_K7_EVNTSEL3" },
     { 0xC0010010, "MSR_SYSCFG" },
     { 0xC0010114, "MSR_VM_CR" },
-    { 0xC0011029, "MSR_F10H_DECFG" },
+    { 0xC0011029, "MSR_F10H_DECFG" }, //interesting msr to see if LFENCE is serializing on AMD
 };
 
 static inline const char *get_msr_name(unsigned int index)
 {
-    for (size_t i = 0; i < sizeof(msr_names) / sizeof(msr_names[0]); i++) {
-        if (msr_names[i].index == index) {
-            return msr_names[i].name;
+    int left = 0;
+    int right = (sizeof(msr_names) / sizeof(msr_names[0])) - 1;
+
+    while (left <= right) {
+        int mid = left + (right - left) / 2;
+        if (msr_names[mid].index == index) {
+            return msr_names[mid].name;
+        } else if (msr_names[mid].index < index) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
         }
     }
     
