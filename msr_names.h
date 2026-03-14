@@ -15,6 +15,7 @@ static const struct msr_def msr_names[] = {
     { 0x00000010, "MSR_IA32_TSC" },
     { 0x0000001B, "MSR_IA32_APICBASE" },
     { 0x0000003A, "MSR_IA32_FEATURE_CONTROL" },
+    { 0x000000FE, "MSR_IA32_MTRRCAP" },
     { 0x00000174, "MSR_IA32_SYSENTER_CS" },
     { 0x00000175, "MSR_IA32_SYSENTER_ESP" },
     { 0x00000176, "MSR_IA32_SYSENTER_EIP" },
@@ -23,6 +24,21 @@ static const struct msr_def msr_names[] = {
     { 0x00000179, "MSR_MCG_CAP" },
     { 0x0000017A, "MSR_MCG_STATUS" },
     { 0x0000017B, "MSR_MCG_CTL" },
+
+    /* MTRRs */
+    { 0x00000250, "MSR_IA32_MTRR_FIX64K_00000" },
+    { 0x00000258, "MSR_IA32_MTRR_FIX16K_80000" },
+    { 0x00000259, "MSR_IA32_MTRR_FIX16K_A0000" },
+    { 0x00000268, "MSR_IA32_MTRR_FIX4K_C0000" },
+    { 0x00000269, "MSR_IA32_MTRR_FIX4K_C8000" },
+    { 0x0000026A, "MSR_IA32_MTRR_FIX4K_D0000" },
+    { 0x0000026B, "MSR_IA32_MTRR_FIX4K_D8000" },
+    { 0x0000026C, "MSR_IA32_MTRR_FIX4K_E0000" },
+    { 0x0000026D, "MSR_IA32_MTRR_FIX4K_E8000" },
+    { 0x0000026E, "MSR_IA32_MTRR_FIX4K_F0000" },
+    { 0x0000026F, "MSR_IA32_MTRR_FIX4K_F8000" },
+    { 0x000002FF, "MSR_IA32_MTRR_DEF_TYPE" },
+
     /* Software Debug MSR */
     { 0x000001D9, "MSR_DEBUGCTL" },
     { 0x000001DB, "MSR_LASTBRANCHFROMIP" },
@@ -102,6 +118,7 @@ static const struct msr_def msr_names[] = {
     { 0xC0000101, "MSR_GS_BASE" },
     { 0xC0000102, "MSR_KERNEL_GS_BASE" },
     { 0xC0000103, "MSR_TSC_AUX" },
+    { 0xC0010010, "MSR_SYSCFG" },
 };
 
 static inline const char *get_msr_name(unsigned int index)
@@ -112,6 +129,18 @@ static inline const char *get_msr_name(unsigned int index)
         }
     }
     
+    // Variable MTRRs
+    if (index >= 0x200 && index <= 0x21F) {
+        static char mtrr_name[32];
+        unsigned int bank = (index - 0x200) / 2;
+        if (index % 2 == 0) {
+            snprintf(mtrr_name, sizeof(mtrr_name), "MSR_IA32_MTRR_PHYSBASE%u", bank);
+        } else {
+            snprintf(mtrr_name, sizeof(mtrr_name), "MSR_IA32_MTRR_PHYSMASK%u", bank);
+        }
+        return mtrr_name;
+    }
+
     // Machine Check Architecture MSRs (IA32_MCi_*)
     if (index >= 0x400 && index < (0x400 + 4 * 32)) { // Support up to 32 MC banks
         static char mc_msr_name[32];
