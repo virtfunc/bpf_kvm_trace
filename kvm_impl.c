@@ -4,6 +4,7 @@
 #include <bpf/bpf.h>
 #include "trace.h"
 #include "kvm_trace.skel.h"
+#include "msr_names.h"
 
 static struct kvm_trace_bpf *skel = NULL;
 static struct ring_buffer *rb = NULL;
@@ -61,35 +62,6 @@ int trace_get_dropped_fd(void)
     return bpf_map__fd(skel->maps.dropped);
 }
 
-static const char *get_msr_name(unsigned int index)
-{
-    switch (index) {
-        case 0x00000010: return "MSR_IA32_TSC";
-        case 0x0000001B: return "MSR_IA32_APICBASE";
-        case 0x0000003A: return "MSR_IA32_FEATURE_CONTROL";
-        case 0x00000174: return "MSR_IA32_SYSENTER_CS";
-        case 0x00000175: return "MSR_IA32_SYSENTER_ESP";
-        case 0x00000176: return "MSR_IA32_SYSENTER_EIP";
-        case 0x000001A0: return "MSR_IA32_MISC_ENABLE";
-        case 0x00000277: return "MSR_IA32_CR_PAT";
-        case 0x4b564d00: return "MSR_KVM_WALL_CLOCK";
-        case 0x4b564d01: return "MSR_KVM_SYSTEM_TIME";
-        case 0x4b564d02: return "MSR_KVM_ASYNC_PF_EN";
-        case 0x4b564d03: return "MSR_KVM_STEAL_TIME";
-        case 0x4b564d04: return "MSR_KVM_PV_EOI_EN";
-        case 0xC0000080: return "MSR_EFER";
-        case 0xC0000081: return "MSR_STAR";
-        case 0xC0000082: return "MSR_LSTAR";
-        case 0xC0000083: return "MSR_CSTAR";
-        case 0xC0000084: return "MSR_SYSCALL_MASK";
-        case 0xC0000100: return "MSR_FS_BASE";
-        case 0xC0000101: return "MSR_GS_BASE";
-        case 0xC0000102: return "MSR_KERNEL_GS_BASE";
-        case 0xC0000103: return "MSR_TSC_AUX";
-        default: return "UNKNOWN";
-    }
-}
-
 void trace_print(struct event *e, char prefix, unsigned long long current_time_ns)
 {
     unsigned int ago_ms = (current_time_ns - e->ts) / 1000000;
@@ -98,15 +70,15 @@ void trace_print(struct event *e, char prefix, unsigned long long current_time_n
         const char *mode = e->type ? "WR" : "RD";
         const char *msr_name = get_msr_name(e->index);
         if (e->result) {
-            printf("%c%sMSR: 0x%08x (%s) RIP: 0x%016llx Value: FAULT (Except #%d) -> %u ms ago\n",
-                   prefix, mode, e->index, msr_name, e->rip, e->exception, ago_ms);
+            printf("%c%sMSR: 0x%08x RIP: 0x%016llx Value: FAULT (Except #%d) -> %07u ms ago (%s)\n",
+                   prefix, mode, e->index, e->rip, e->exception, ago_ms, msr_name);
         } else {
-            printf("%c%sMSR: 0x%08x (%s) RIP: 0x%016llx Value: 0x%016llx -> %u ms ago\n",
-                   prefix, mode, e->index, msr_name, e->rip, e->value, ago_ms);
+            printf("%c%sMSR: 0x%08x RIP: 0x%016llx Value: 0x%016llx -> %07u ms ago (%s)\n",
+                   prefix, mode, e->index, e->rip, e->value, ago_ms, msr_name);
         } 
     } else if (e->kind == EVENT_KIND_CPUID) {
         printf("%cCPUID Leaf: 0x%08x RIP: 0x%016llx ", prefix, e->index, e->rip);
-        printf(" EAX: 0x%08llx EBX: 0x%08llx ECX: 0x%08llx EDX: 0x%08llx -> %u ms ago\n",
+        printf(" EAX: 0x%08llx EBX: 0x%08llx ECX: 0x%08llx EDX: 0x%08llx -> %07u ms ago\n",
                e->value & 0xFFFFFFFF, e->value >> 32, e->value_extra & 0xFFFFFFFF, e->value_extra >> 32, ago_ms);
     }
 }
