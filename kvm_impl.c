@@ -70,15 +70,15 @@ void trace_print(struct event *e, char prefix, unsigned long long current_time_n
         const char *mode = e->type ? "WR" : "RD";
         const char *msr_name = get_msr_name(e->index);
         if (e->result) {
-            printf("%c%sMSR: 0x%08x RIP: 0x%016llx Value: FAULT (Except #%d) -> %07u ms ago (%s)\n",
+            printf("%c%sMSR: 0x%08x RIP: 0x%016llx Value: FAULT (Except #%d) -> %7u ms ago (%s)\n",
                    prefix, mode, e->index, e->rip, e->exception, ago_ms, msr_name);
         } else {
-            printf("%c%sMSR: 0x%08x RIP: 0x%016llx Value: 0x%016llx -> %07u ms ago (%s)\n",
+            printf("%c%sMSR: 0x%08x RIP: 0x%016llx Value: 0x%016llx -> %7u ms ago (%s)\n",
                    prefix, mode, e->index, e->rip, e->value, ago_ms, msr_name);
         } 
     } else if (e->kind == EVENT_KIND_CPUID) {
         printf("%cCPUID Leaf: 0x%08x RIP: 0x%016llx ", prefix, e->index, e->rip);
-        printf(" EAX: 0x%08llx EBX: 0x%08llx ECX: 0x%08llx EDX: 0x%08llx -> %07u ms ago\n",
+        printf(" EAX: 0x%08llx EBX: 0x%08llx ECX: 0x%08llx EDX: 0x%08llx -> %7u ms ago\n",
                e->value & 0xFFFFFFFF, e->value >> 32, e->value_extra & 0xFFFFFFFF, e->value_extra >> 32, ago_ms);
     }
 }
