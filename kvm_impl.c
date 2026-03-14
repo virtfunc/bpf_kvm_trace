@@ -5,6 +5,7 @@
 #include "trace.h"
 #include "kvm_trace.skel.h"
 #include "msr_names.h"
+#include "cpuid_names.h"
 
 static struct kvm_trace_bpf *skel = NULL;
 static struct ring_buffer *rb = NULL;
@@ -80,8 +81,9 @@ void trace_print(struct event *e, char prefix, unsigned long long current_time_n
                    prefix, mode, e->index, e->rip, e->value, ago_ms, msr_name);
         } 
     } else if (e->kind == EVENT_KIND_CPUID) {
+        const char *cpuid_name = get_cpuid_name(e->index);
         printf("%cCPUID Leaf: 0x%08x RIP: 0x%016llx ", prefix, e->index, e->rip);
-        printf(" EAX: 0x%08llx EBX: 0x%08llx ECX: 0x%08llx EDX: 0x%08llx -> %7u ms ago\n",
-               e->value & 0xFFFFFFFF, e->value >> 32, e->value_extra & 0xFFFFFFFF, e->value_extra >> 32, ago_ms);
+        printf(" EAX: 0x%08llx EBX: 0x%08llx ECX: 0x%08llx EDX: 0x%08llx -> %7u ms ago (%s)\n",
+               e->value & 0xFFFFFFFF, e->value >> 32, e->value_extra & 0xFFFFFFFF, e->value_extra >> 32, ago_ms, cpuid_name);
     }
 }
