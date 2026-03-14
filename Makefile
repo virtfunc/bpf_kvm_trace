@@ -1,0 +1,51 @@
+# Variables for compilers and flags
+CC := clang
+BPF_CC := clang
+
+# General flags
+CFLAGS := -g -O2 -Wall
+LDFLAGS := -lbpf -lelf -lz
+
+# BPF specific flags
+BPF_CFLAGS := -g -O2 -target bpf -D__TARGET_ARCH_x86
+
+# Source and object files
+TARGET := kvm_trace
+USER_SRCS := main.c kvm_impl.c
+BPF_C_SRC := kvm_trace.bpf.c
+BPF_C_OBJ := $(BPF_C_SRC:.bpf.c=.bpf.o)
+SKELETON := $(BPF_C_SRC:.bpf.c=.skel.h)
+VMLINUX_H := vmlinux.h
+
+.PHONY: all clean run install-deps
+
+# Default target
+all: $(TARGET)
+
+# Link the final executable
+$(TARGET): $(USER_SRCS) $(SKELETON)
+	$(CC) $(CFLAGS) $(USER_SRCS) -o $@ $(LDFLAGS)
+
+# Generate BPF skeleton header
+$(SKELETON): $(BPF_C_OBJ)
+	bpftool gen skeleton $< > $@
+
+# Compile BPF C code
+$(BPF_C_OBJ): $(BPF_C_SRC) $(VMLINUX_H)
+	$(BPF_CC) $(BPF_CFLAGS) -c $< -o $@
+
+# Generate vmlinux.h from BTF info
+$(VMLINUX_H):
+	bpftool btf dump file /sys/kernel/btf/vmlinux format c > $@
+
+# Clean up generated files
+clean:
+	rm -f $(TARGET) $(BPF_C_OBJ) $(SKELETON) $(VMLINUX_H)
+
+# Example run command (requires sudo)
+run: all
+	sudo ./$(TARGET) -dm
+
+# Install dependencies for Arch Linux (requires sudo)
+install-deps:
+	sudo pacman -Syu --noconfirm clang gcc linux-headers libbpf elfutils zlib

@@ -1,7 +1,10 @@
 a simple sloppy program to trace the RD/WRMSR and CPUID inside a KVM virtual machine using BPF.
 
 # build
-`$ ./build.sh`
+`$ make`
+
+To install dependencies on Arch Linux:
+`$ make install-deps`
 
 # dedupe mode (works with msr and cpuid trace modes)
 `# kvm_trace -d`
