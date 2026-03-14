@@ -15,7 +15,11 @@ static const struct msr_def msr_names[] = {
     { 0x00000010, "MSR_TSC" },
     { 0x0000001B, "MSR_APIC_BASE" },
     { 0x0000003A, "MSR_FEATURE_CONTROL" }, // doesn't exist on AMD.
+    { 0x00000048, "MSR_SPEC_CTRL" }, 
+    { 0x00000049, "MSR_PRED_CTRL" }, 
     { 0x0000008B, "MSR_BIOS_SIGN_ID" }, // microcode version.
+    { 0x000000E7, "MPERF" }, 
+    { 0x000000E8, "APERF" }, 
     { 0x000000FE, "MSR_MTRR_CAP" },
     { 0x0000010A, "MSR_ARCH_CAPABILITIES" }, // if you are exposing this on AMD, you shouldn't be.
     { 0x00000174, "MSR_SYSENTER_CS" },
@@ -119,6 +123,9 @@ static const struct msr_def msr_names[] = {
     { 0xC0000082, "MSR_LSTAR" },
     { 0xC0000083, "MSR_CSTAR" },
     { 0xC0000084, "MSR_SYSCALL_MASK" },
+    { 0xC00000E7, "MPERF_READ_ONLY" },
+    { 0xC00000E8, "APERF_READ_ONLY" },
+    { 0xC00000E9, "IR_PERF_COUNT"},
     { 0xC0000100, "MSR_FS_BASE" },
     { 0xC0000101, "MSR_GS_BASE" },
     { 0xC0000102, "MSR_KERNEL_GS_BASE" },
@@ -129,14 +136,15 @@ static const struct msr_def msr_names[] = {
     { 0xC000101B, "DR3_ADDR_MASK" },
     { 0xC0001027, "DR0_ADDR_MASK" },
 
-    { 0xC0011095, "MSR_L3RANGE_RESERVE_BASE_ADDR" },
-    { 0xC0011096, "MSR_L3RANGE_RESERVE_MAX_ADDR" },
-    { 0xC001109A, "MSR_L3RANGE_RESERVE_WAY_MASK" },
-
     { 0xC0010000, "MSR_PERF_EVT_SEL0" },
     { 0xC0010001, "MSR_PERF_EVT_SEL1" },
     { 0xC0010002, "MSR_PERF_EVT_SEL2" },
     { 0xC0010003, "MSR_PERF_EVT_SEL3" },
+    { 0xC0010004, "MSR_PERF_CTR0" },
+    { 0xC0010005, "MSR_PERF_CTR1" },
+    { 0xC0010006, "MSR_PERF_CTR2" },
+    { 0xC0010007, "MSR_PERF_CTR3" },
+
     { 0xC0010010, "MSR_SYSCFG" },
     { 0xC0010015, "MSR_HWCR" },
     { 0xC0010030, "MSR_PROCESSOR_NAME_STRING1"},
@@ -155,6 +163,10 @@ static const struct msr_def msr_names[] = {
     { 0xC0010114, "MSR_VM_CR" },
 
     { 0xC0011029, "MSR_F10H_DECFG" }, //interesting msr to see if LFENCE is serializing on AMD
+
+    { 0xC0011095, "MSR_L3RANGE_RESERVE_BASE_ADDR" },
+    { 0xC0011096, "MSR_L3RANGE_RESERVE_MAX_ADDR" },
+    { 0xC001109A, "MSR_L3RANGE_RESERVE_WAY_MASK" },
 };
 
 static inline const char *get_msr_name(unsigned int index)

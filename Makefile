@@ -12,6 +12,7 @@ BPF_CFLAGS := -g -O2 -target bpf -D__TARGET_ARCH_x86
 # Source and object files
 TARGET := kvm_trace
 USER_SRCS := main.c kvm_impl.c
+USER_HDRS := msr_names.h trace.h
 BPF_C_SRC := kvm_trace.bpf.c
 BPF_C_OBJ := $(BPF_C_SRC:.bpf.c=.bpf.o)
 SKELETON := $(BPF_C_SRC:.bpf.c=.skel.h)
@@ -23,7 +24,7 @@ VMLINUX_H := vmlinux.h
 all: $(TARGET)
 
 # Link the final executable
-$(TARGET): $(USER_SRCS) $(SKELETON)
+$(TARGET): $(USER_SRCS) $(SKELETON) $(USER_HDRS)
 	$(CC) $(CFLAGS) $(USER_SRCS) -o $@ $(LDFLAGS)
 
 # Generate BPF skeleton header
@@ -31,7 +32,7 @@ $(SKELETON): $(BPF_C_OBJ)
 	bpftool gen skeleton $< > $@
 
 # Compile BPF C code
-$(BPF_C_OBJ): $(BPF_C_SRC) $(VMLINUX_H)
+$(BPF_C_OBJ): $(BPF_C_SRC) $(VMLINUX_H) trace.h
 	$(BPF_CC) $(BPF_CFLAGS) -c $< -o $@
 
 # Generate vmlinux.h from BTF info
