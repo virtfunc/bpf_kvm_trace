@@ -13,25 +13,25 @@ static const struct msr_def msr_names[] = {
     /* Standard x86 MSRs */
     { 0x00000000, "MSR_IA32_P5_MC_ADDR" }, // should return 0 on the metal, legacy now undocumented on amd.
     { 0x00000010, "MSR_IA32_TSC" },
-    { 0x0000001B, "MSR_IA32_APICBASE" },
-    { 0x0000003A, "MSR_IA32_FEATURE_CONTROL" },
+    { 0x0000001B, "MSR_IA32_APIC_BASE" },
+    { 0x0000003A, "MSR_IA32_FEATURE_CONTROL" }, // doesn't exist on AMD.
     { 0x0000008B, "MSR_IA32_BIOS_SIGN_ID" }, // microcode version.
-    { 0x000000FE, "MSR_IA32_MTRRCAP" },
-    { 0x0000010A, "MSR_IA32_ARCH_CAPABILITIES" }, // if you are exposing this on amd, you shouldn't be.
+    { 0x000000FE, "MSR_IA32_MTRR_CAP" },
+    { 0x0000010A, "MSR_IA32_ARCH_CAPABILITIES" }, // if you are exposing this on AMD, you shouldn't be.
     { 0x00000174, "MSR_IA32_SYSENTER_CS" },
     { 0x00000175, "MSR_IA32_SYSENTER_ESP" },
     { 0x00000176, "MSR_IA32_SYSENTER_EIP" },
     { 0x00000179, "MSR_MCG_CAP" },
     { 0x0000017A, "MSR_MCG_STATUS" },
     { 0x0000017B, "MSR_MCG_CTL" },
-    { 0x000001A0, "MSR_IA32_MISC_ENABLE" },
+    { 0x000001A0, "MSR_IA32_MISC_ENABLE" }, // doesn't exist on AMD.
 
     /* Software Debug MSR */
     { 0x000001D9, "MSR_DEBUGCTL" },
-    { 0x000001DB, "MSR_LASTBRANCHFROMIP" },
-    { 0x000001DC, "MSR_LASTBRANCHTOIP" },
-    { 0x000001DD, "MSR_LASTINTFROMIP" },
-    { 0x000001DE, "MSR_LASTINTTOIP" },
+    { 0x000001DB, "MSR_LAST_BRANCH_FROM_IP" },
+    { 0x000001DC, "MSR_LAST_BRANCH_TO_IP" },
+    { 0x000001DD, "MSR_LAST_INT_FROM_IP" },
+    { 0x000001DE, "MSR_LAST_INT_TO_IP" },
 
     /* MTRRs */
     { 0x00000250, "MSR_IA32_MTRR_FIX64K_00000" },
@@ -114,16 +114,30 @@ static const struct msr_def msr_names[] = {
     { 0xC0000101, "MSR_GS_BASE" },
     { 0xC0000102, "MSR_KERNEL_GS_BASE" },
     { 0xC0000103, "MSR_TSC_AUX" },
+
     { 0xC0001019, "DR1_ADDR_MASK" },
     { 0xC000101A, "DR2_ADDR_MASK" },
     { 0xC000101B, "DR3_ADDR_MASK" },
     { 0xC0001027, "DR0_ADDR_MASK" },
-    { 0xC0010000, "MSR_K7_EVNTSEL0" },
-    { 0xC0010001, "MSR_K7_EVNTSEL1" },
-    { 0xC0010002, "MSR_K7_EVNTSEL2" },
-    { 0xC0010003, "MSR_K7_EVNTSEL3" },
+
+    { 0xC0011095, "MSR_L3RANGE_RESERVE_BASE_ADDR" },
+    { 0xC0011096, "MSR_L3RANGE_RESERVE_MAX_ADDR" },
+    { 0xC001109A, "MSR_L3RANGE_RESERVE_WAY_MASK" },
+
+    { 0xC0010000, "MSR_PERF_EVT_SEL0" },
+    { 0xC0010001, "MSR_PERF_EVT_SEL1" },
+    { 0xC0010002, "MSR_PERF_EVT_SEL2" },
+    { 0xC0010003, "MSR_PERF_EVT_SEL3" },
     { 0xC0010010, "MSR_SYSCFG" },
+    { 0xC0010015, "MSR_HWCR" },
+    { 0xC0010030, "MSR_PROCESSOR_NAME_STRING1"},
+    { 0xC0010031, "MSR_PROCESSOR_NAME_STRING2"},
+    { 0xC0010032, "MSR_PROCESSOR_NAME_STRING3"},
+    { 0xC0010033, "MSR_PROCESSOR_NAME_STRING4"},
+    { 0xC0010034, "MSR_PROCESSOR_NAME_STRING5"},
+    { 0xC0010035, "MSR_PROCESSOR_NAME_STRING6"},
     { 0xC0010114, "MSR_VM_CR" },
+
     { 0xC0011029, "MSR_F10H_DECFG" }, //interesting msr to see if LFENCE is serializing on AMD
 };
 
