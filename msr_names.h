@@ -161,6 +161,8 @@ static const struct msr_def msr_names[] = {
 
     { 0xC0010104, "MSR_TSC_RATIO"},
     { 0xC0010114, "MSR_VM_CR" },
+    { 0xC0010200, "MSR_PERF_EVT_SEL0" },
+    { 0xC0010201, "MSR_PERF_CTR0" },
 
     { 0xC0011029, "MSR_F10H_DECFG" }, //interesting msr to see if LFENCE is serializing on AMD
 
