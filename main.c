@@ -118,12 +118,11 @@ static void usage(const char *prog)
 {
     fprintf(stderr, "Usage: %s [options]\n", prog);
     fprintf(stderr, "\nOptions:\n");
-    fprintf(stderr, "  -m, --msr      Trace MSR instructions\n");
-    fprintf(stderr, "  -c, --cpuid    Trace CPUID instructions\n");
-    fprintf(stderr, "  -d, --dedupe   Deduplicate events (top-like view)\n");
-    fprintf(stderr, "      --no-mtrr  Do not log MTRR MSRs\n");
-    fprintf(stderr, "      --no-mc    Do not log Machine Check MSRs\n");
-    fprintf(stderr, "  -h, --help     Show this help message\n");
+    fprintf(stderr, "  -m, --msr        Trace MSR instructions\n");
+    fprintf(stderr, "  -c, --cpuid      Trace CPUID instructions\n");
+    fprintf(stderr, "  -d, --dedupe     Deduplicate events (top-like view)\n");
+    fprintf(stderr, "  -n, --noclutter  Do not log MTRR and Machine Check MSRs\n");
+    fprintf(stderr, "  -h, --help       Show this help message\n");
 }
 
 int main(int argc, char **argv)
@@ -135,20 +134,18 @@ int main(int argc, char **argv)
         {"dedupe", no_argument, 0, 'd'},
         {"msr", no_argument, 0, 'm'},
         {"cpuid", no_argument, 0, 'c'},
+        {"noclutter", no_argument, 0, 'n'},
         {"help", no_argument, 0, 'h'},
-        {"no-mtrr", no_argument, 0, 1001},
-        {"no-mc", no_argument, 0, 1002},
         {0, 0, 0, 0}
     };
     int opt;
-    while ((opt = getopt_long(argc, argv, "dmch", long_options, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "dmcnh", long_options, NULL)) != -1) {
         switch (opt) {
         case 'd': dedupe_mode = 1; break;
         case 'm': flags |= TRACE_MSR; break;
         case 'c': flags |= TRACE_CPUID; break;
+        case 'n': disable_mtrr = 1; disable_mc = 1; break;
         case 'h': usage(argv[0]); return 0;
-        case 1001: disable_mtrr = 1; break;
-        case 1002: disable_mc = 1; break;
         default: usage(argv[0]); return 1;
         }
     }

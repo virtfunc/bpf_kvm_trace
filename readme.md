@@ -16,8 +16,7 @@ To install dependencies on Arch Linux:
 `# kvm_trace -m`
 
 # filtering (msr mode)
-`# kvm_trace -m --no-mtrr`
-`# kvm_trace -m --no-mc`
+`# kvm_trace -m --noclutter`
 
 # simple shell script (older)
 
