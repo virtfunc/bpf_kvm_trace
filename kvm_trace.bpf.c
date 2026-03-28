@@ -5,7 +5,7 @@
 
 char LICENSE[] SEC("license") = "GPL";
 
-volatile const bool noclutter = false;
+volatile const bool verbose = false;
 
 struct trace_event_raw_kvm_msr {
     struct trace_entry ent;
@@ -86,7 +86,7 @@ SEC("tracepoint/kvm/kvm_msr")
 int tp_kvm_msr(struct trace_event_raw_kvm_msr *args) {
 	u32 index = args->ecx;
 
-	if (noclutter) {
+	if (!verbose) {
 		// MSR_MTRR_CAP, MSR_PAT, MSR_MTRR_DEF_TYPE, and ranges for variable and fixed MTRRs
 		if ((index >= 0x200 && index <= 0x2FF) || index == 0xFE) {
 			return 0;

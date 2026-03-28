@@ -10,7 +10,7 @@
 static struct kvm_trace_bpf *skel = NULL;
 static struct ring_buffer *rb = NULL;
 
-struct ring_buffer *trace_init_rb(handle_event_t handler, int flags, int noclutter)
+struct ring_buffer *trace_init_rb(handle_event_t handler, int flags, int verbose)
 {
     int err;
 
@@ -20,7 +20,7 @@ struct ring_buffer *trace_init_rb(handle_event_t handler, int flags, int noclutt
         return NULL;
     }
 
-    skel->rodata->noclutter = noclutter;
+    skel->rodata->verbose = verbose;
 
     err = kvm_trace_bpf__load(skel);
     if (err) {

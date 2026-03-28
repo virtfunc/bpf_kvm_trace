@@ -17,7 +17,7 @@ static struct event buffered_events[MAX_BUFFERED_EVENTS];
 static int buffered_count = 0;
 static unsigned long long userspace_drops = 0;
 static int dedupe_mode = 0;
-static int noclutter = 0;
+static int verbose = 0;
 
 static struct event unique_events[MAX_SEEN_INDICES];
 static int unique_count = 0;
@@ -120,7 +120,7 @@ static void usage(const char *prog)
     fprintf(stderr, "  -m, --msr        Trace MSR instructions\n");
     fprintf(stderr, "  -c, --cpuid      Trace CPUID instructions\n");
     fprintf(stderr, "  -d, --dedupe     Deduplicate events (top-like view)\n");
-    fprintf(stderr, "  -n, --noclutter  Do not log MTRR and Machine Check MSRs\n");
+    fprintf(stderr, "  -v, --verbose    Log MTRR and Machine Check MSRs\n");
     fprintf(stderr, "  -h, --help       Show this help message\n");
 }
 
@@ -133,17 +133,17 @@ int main(int argc, char **argv)
         {"dedupe", no_argument, 0, 'd'},
         {"msr", no_argument, 0, 'm'},
         {"cpuid", no_argument, 0, 'c'},
-        {"noclutter", no_argument, 0, 'n'},
+        {"verbose", no_argument, 0, 'v'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
     int opt;
-    while ((opt = getopt_long(argc, argv, "dmcnh", long_options, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "dmcvh", long_options, NULL)) != -1) {
         switch (opt) {
         case 'd': dedupe_mode = 1; break;
         case 'm': flags |= TRACE_MSR; break;
         case 'c': flags |= TRACE_CPUID; break;
-        case 'n': noclutter = 1; break;
+        case 'v': verbose = 1; break;
         case 'h': usage(argv[0]); return 0;
         default: usage(argv[0]); return 1;
         }
@@ -155,7 +155,7 @@ int main(int argc, char **argv)
     }
     libbpf_set_print(NULL);
 
-    rb = trace_init_rb(handle_event, flags, noclutter);
+    rb = trace_init_rb(handle_event, flags, verbose);
     if (!rb) return 1;
 
     printf("Tracing...\n");

@@ -44,10 +44,10 @@ clean:
 	rm -f $(TARGET) $(BPF_C_OBJ) $(SKELETON) $(VMLINUX_H)
 
 run: all #assumes sudo
-	sudo ./$(TARGET) -dm
+	sudo ./$(TARGET) -dmv
 
 run_simple: all # assumes sudo
-	sudo ./$(TARGET) -dm -n
+	sudo ./$(TARGET) -dm
 
 # install deps for arch, assumes sudo
 install-deps:
