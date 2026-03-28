@@ -87,7 +87,7 @@ static void flush_events(unsigned long long current_time_ns)
         }
 
         for (int i = 0; i < (is_tty ? max_rows : unique_count); i++) {
-            trace_print(&unique_events[i], '*', current_time_ns);
+            trace_print(&unique_events[i], '*', current_time_ns, 1);
         }
     } else {
         for (int i = 0; i < buffered_count; i++) {
@@ -100,7 +100,7 @@ static void flush_events(unsigned long long current_time_ns)
                 mark_seen(e->index);
             }
 
-            trace_print(e, prefix, current_time_ns);
+            trace_print(e, prefix, current_time_ns, 0);
         }
     }
     buffered_count = 0;
@@ -119,7 +119,7 @@ static void usage(const char *prog)
     fprintf(stderr, "\nOptions:\n");
     fprintf(stderr, "  -m, --msr        Trace MSR instructions\n");
     fprintf(stderr, "  -c, --cpuid      Trace CPUID instructions\n");
-    fprintf(stderr, "  -d, --dedupe     Deduplicate events (top-like view)\n");
+    fprintf(stderr, "  -d, --dedupe     Deduplicate events\n");
     fprintf(stderr, "  -v, --verbose    Log MTRR and Machine Check MSRs\n");
     fprintf(stderr, "  -h, --help       Show this help message\n");
 }

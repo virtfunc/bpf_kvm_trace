@@ -65,24 +65,40 @@ int trace_get_dropped_fd(void)
     return bpf_map__fd(skel->maps.dropped);
 }
 
-void trace_print(struct event *e, char prefix, unsigned long long current_time_ns)
+void trace_print(struct event *e, char prefix, unsigned long long current_time_ns, int dedupe_mode)
 {
     unsigned int ago_ms = (current_time_ns - e->ts) / 1000000;
+    double ts_sec = (double)e->ts / 1000000000.0;
     
     if (e->kind == EVENT_KIND_MSR) {
         const char *mode = e->type ? "WR" : "RD";
         const char *msr_name = get_msr_name(e->index);
         if (e->result) {
-            printf("%c%sMSR: 0x%08x RIP: 0x%016llx Value: FAULT (Except #%d) -> %7u ms ago (%s)\n",
-                   prefix, mode, e->index, e->rip, e->exception, ago_ms, msr_name);
+            if (dedupe_mode) {
+                printf("%c%sMSR: 0x%08x RIP: 0x%016llx Value: FAULT (Except #%d) -> %7u ms ago (%s)\n",
+                       prefix, mode, e->index, e->rip, e->exception, ago_ms, msr_name);
+            } else {
+                printf("%c%sMSR: 0x%08x RIP: 0x%016llx Value: FAULT (Except #%d) -> [%.6f] (%s)\n",
+                       prefix, mode, e->index, e->rip, e->exception, ts_sec, msr_name);
+            }
         } else {
-            printf("%c%sMSR: 0x%08x RIP: 0x%016llx Value: 0x%016llx -> %7u ms ago (%s)\n",
-                   prefix, mode, e->index, e->rip, e->value, ago_ms, msr_name);
+            if (dedupe_mode) {
+                printf("%c%sMSR: 0x%08x RIP: 0x%016llx Value: 0x%016llx -> %7u ms ago (%s)\n",
+                       prefix, mode, e->index, e->rip, e->value, ago_ms, msr_name);
+            } else {
+                printf("%c%sMSR: 0x%08x RIP: 0x%016llx Value: 0x%016llx -> [%.6f] (%s)\n",
+                       prefix, mode, e->index, e->rip, e->value, ts_sec, msr_name);
+            }
         } 
     } else if (e->kind == EVENT_KIND_CPUID) {
         const char *cpuid_name = get_cpuid_name(e->index);
         printf("%cCPUID Leaf: 0x%08x RIP: 0x%016llx ", prefix, e->index, e->rip);
-        printf(" EAX: 0x%08llx EBX: 0x%08llx ECX: 0x%08llx EDX: 0x%08llx -> %7u ms ago (%s)\n",
-               e->value & 0xFFFFFFFF, e->value >> 32, e->value_extra & 0xFFFFFFFF, e->value_extra >> 32, ago_ms, cpuid_name);
+        if (dedupe_mode) {
+            printf(" EAX: 0x%08llx EBX: 0x%08llx ECX: 0x%08llx EDX: 0x%08llx -> %7u ms ago (%s)\n",
+                   e->value & 0xFFFFFFFF, e->value >> 32, e->value_extra & 0xFFFFFFFF, e->value_extra >> 32, ago_ms, cpuid_name);
+        } else {
+            printf(" EAX: 0x%08llx EBX: 0x%08llx ECX: 0x%08llx EDX: 0x%08llx -> [%.6f] (%s)\n",
+                   e->value & 0xFFFFFFFF, e->value >> 32, e->value_extra & 0xFFFFFFFF, e->value_extra >> 32, ts_sec, cpuid_name);
+        }
     }
 }
