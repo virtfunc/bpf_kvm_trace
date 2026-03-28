@@ -74,9 +74,10 @@ static void flush_events(unsigned long long current_time_ns)
 
         qsort(unique_events, unique_count, sizeof(struct event), cmp_event_ts_desc);
 
+        static int last_printed_lines = 0;
         int is_tty = isatty(STDOUT_FILENO);
-        if (is_tty) {
-            printf("\033[2J\033[H");
+        if (is_tty && last_printed_lines > 0) {
+            printf("\033[%dA\033[J", last_printed_lines);
         }
 
         struct winsize w;
@@ -86,8 +87,13 @@ static void flush_events(unsigned long long current_time_ns)
                 max_rows = w.ws_row - 1;
         }
 
-        for (int i = 0; i < (is_tty ? max_rows : unique_count); i++) {
+        int print_count = is_tty ? max_rows : unique_count;
+        for (int i = 0; i < print_count; i++) {
             trace_print(&unique_events[i], '*', current_time_ns, 1);
+        }
+        
+        if (is_tty) {
+            last_printed_lines = print_count;
         }
     } else {
         for (int i = 0; i < buffered_count; i++) {
