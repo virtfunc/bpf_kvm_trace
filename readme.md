@@ -22,6 +22,5 @@ To install dependencies on Arch Linux:
 
 `# ./msr_trace_kvm.sh`
 
-
 ## notes
 was designed for use in a tty, outputting to a file may not work as expected in dedupe mode. (especially reported times)
