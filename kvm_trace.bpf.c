@@ -5,8 +5,7 @@
 
 char LICENSE[] SEC("license") = "GPL";
 
-volatile const bool no_mtrr_msrs = false;
-volatile const bool no_mc_msrs = false;
+volatile const bool noclutter = false;
 
 struct trace_event_raw_kvm_msr {
     struct trace_entry ent;
@@ -87,16 +86,13 @@ SEC("tracepoint/kvm/kvm_msr")
 int tp_kvm_msr(struct trace_event_raw_kvm_msr *args) {
 	u32 index = args->ecx;
 
-	if (no_mtrr_msrs) {
+	if (noclutter) {
 		// MSR_MTRR_CAP, MSR_PAT, MSR_MTRR_DEF_TYPE, and ranges for variable and fixed MTRRs
 		if ((index >= 0x200 && index <= 0x2FF) || index == 0xFE) {
 			return 0;
 		}
-	}
-
-	if (no_mc_msrs) {
-		// MCG_CAP, MCG_STATUS, MCG_CTL and MCi_* banks
-		if ((index >= 0x179 && index <= 0x17B) || (index >= 0x400 && index < (0x400 + 4 * 32))) {
+		// MCG_CAP, MCG_STATUS, MCG_CTL and MCi_* banks + AMD MCA banks (0xC0002000->0xC0002FFF)
+		if ((index >= 0x179 && index <= 0x17B) || (index >= 0x400 && index < (0x400 + 4 * 32)) || (index >= 0xC0002000 && index < 0xC0002FFF)) {
 			return 0;
 		}
 	}

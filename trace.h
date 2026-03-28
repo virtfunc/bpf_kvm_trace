@@ -26,7 +26,7 @@ typedef int (*handle_event_t)(void *ctx, void *data, size_t data_sz);
 
 struct ring_buffer;
 
-struct ring_buffer *trace_init_rb(handle_event_t handler, int flags, int no_mtrr, int no_mc);
+struct ring_buffer *trace_init_rb(handle_event_t handler, int flags, int noclutter);
 void trace_cleanup(void);
 void trace_print(struct event *e, char prefix, unsigned long long current_time_ns);
 int trace_get_dropped_fd(void);

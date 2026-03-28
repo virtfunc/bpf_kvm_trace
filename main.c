@@ -17,8 +17,7 @@ static struct event buffered_events[MAX_BUFFERED_EVENTS];
 static int buffered_count = 0;
 static unsigned long long userspace_drops = 0;
 static int dedupe_mode = 0;
-static int disable_mtrr = 0;
-static int disable_mc = 0;
+static int noclutter = 0;
 
 static struct event unique_events[MAX_SEEN_INDICES];
 static int unique_count = 0;
@@ -144,7 +143,7 @@ int main(int argc, char **argv)
         case 'd': dedupe_mode = 1; break;
         case 'm': flags |= TRACE_MSR; break;
         case 'c': flags |= TRACE_CPUID; break;
-        case 'n': disable_mtrr = 1; disable_mc = 1; break;
+        case 'n': noclutter = 1; break;
         case 'h': usage(argv[0]); return 0;
         default: usage(argv[0]); return 1;
         }
@@ -156,7 +155,7 @@ int main(int argc, char **argv)
     }
     libbpf_set_print(NULL);
 
-    rb = trace_init_rb(handle_event, flags, disable_mtrr, disable_mc);
+    rb = trace_init_rb(handle_event, flags, noclutter);
     if (!rb) return 1;
 
     printf("Tracing...\n");

@@ -47,7 +47,7 @@ run: all #assumes sudo
 	sudo ./$(TARGET) -dm
 
 run_simple: all # assumes sudo
-	sudo ./$(TARGET) -dm --no-mtrr --no-mc
+	sudo ./$(TARGET) -dm -n
 
 # install deps for arch, assumes sudo
 install-deps:

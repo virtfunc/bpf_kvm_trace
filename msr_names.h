@@ -9,7 +9,7 @@ struct msr_def {
     const char *name;
 };
 
-static const struct msr_def msr_names[] = {
+static const struct msr_def msr_names[] = { // used in binary search, must be sorted.
     /* Standard x86 MSRs */
     { 0x00000000, "MSR_P5_MC_ADDR" }, // should return 0 on the metal, legacy now undocumented on amd.
     { 0x00000010, "MSR_TSC" },
