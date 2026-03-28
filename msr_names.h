@@ -190,6 +190,9 @@ static inline const char *get_msr_name(unsigned int index)
             right = mid - 1;
         }
     }
+
+    if (index >= 0x40000000 && index <= 0x4000FFFF) return "HV_UNKNOWN";
+    if (index >= 0x4b564d00 && index <= 0x4b564dFF) return "KVM_UNKNOWN";
     
     // Variable MTRRs
     if (index >= 0x200 && index <= 0x21F) {
@@ -221,8 +224,33 @@ static inline const char *get_msr_name(unsigned int index)
         return mc_msr_name;
     }
 
-    if (index >= 0x40000000 && index <= 0x4000FFFF) return "HV_UNKNOWN";
-    if (index >= 0x4b564d00 && index <= 0x4b564dFF) return "KVM_UNKNOWN";
+    // AMD Machine Check Architecture MSRs
+    if (index >= 0xC0002000 && index <= 0xC0002FFF) {
+        static char amd_mc_msr_name[32];
+        unsigned int bank = (index - 0xC0002000) / 0x10;
+        unsigned int type = (index - 0xC0002000) % 0x10;
+        const char *type_name = "UNKNOWN";
+
+        switch (type) {
+            case 0x0: type_name = "CTL"; break;
+            case 0x1: type_name = "STATUS"; break;
+            case 0x2: type_name = "ADDR"; break;
+            case 0x3: type_name = "MISC0"; break;
+            case 0x4: type_name = "CONFIG"; break;
+            case 0x5: type_name = "IPID"; break;
+            case 0x6: type_name = "SYND"; break;
+            case 0x8: type_name = "DESTAT"; break;
+            case 0x9: type_name = "DEADDR"; break;
+            case 0xA: type_name = "MISC1"; break;
+            case 0xB: type_name = "MISC2"; break;
+            case 0xC: type_name = "MISC3"; break;
+            case 0xD: type_name = "MISC4"; break;
+            case 0xE: type_name = "SYND1"; break;
+            case 0xF: type_name = "SYND2"; break;
+        }
+        snprintf(amd_mc_msr_name, sizeof(amd_mc_msr_name), "MSR_AMD_MC%u_%s", bank, type_name);
+        return amd_mc_msr_name;
+    }
     
     return "UNKNOWN";
 }
