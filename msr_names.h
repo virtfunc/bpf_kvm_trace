@@ -132,6 +132,7 @@ static const struct msr_def msr_names[] = { // used in binary search, must be so
     { 0xC0000101, "MSR_GS_BASE" },
     { 0xC0000102, "MSR_KERNEL_GS_BASE" },
     { 0xC0000103, "MSR_TSC_AUX" },
+    { 0xC0000104, "MSR_AMD64_TSC_RATIO" },
 
     { 0xC0001019, "DR1_ADDR_MASK" },
     { 0xC000101A, "DR2_ADDR_MASK" },
@@ -163,10 +164,27 @@ static const struct msr_def msr_names[] = { // used in binary search, must be so
 
     { 0xC0010104, "MSR_TSC_RATIO"},
     { 0xC0010114, "MSR_VM_CR" },
-    { 0xC0010200, "MSR_PERF_EVT_SEL0" }, //alias of 0xC0010000
-    { 0xC0010201, "MSR_PERF_CTR0" }, //alias of 0xC0010004
+    { 0xC0010115, "MSR_IGNNE" },
+    { 0xC0010117, "MSR_VM_HSAVE_PA" },
+    { 0xC0010140, "MSR_AMD64_OSVW_ID_LENGTH" },
+    { 0xC0010141, "MSR_AMD64_OSVW_STATUS" },
 
+    { 0xC0010200, "MSR_PERF_EVT_SEL0" }, //alias of 0xC0010000
+    { 0xC0010201, "MSR_PERF_CTR0" },     //alias of 0xC0010004
+    { 0xC0010202, "MSR_PERF_EVT_SEL1" }, //alias of 0xC0010001
+    { 0xC0010203, "MSR_PERF_CTR1" },     //alias of 0xC0010005
+    { 0xC0010204, "MSR_PERF_EVT_SEL2" }, //alias of 0xC0010002
+    { 0xC0010205, "MSR_PERF_CTR2" },     //alias of 0xC0010006
+    { 0xC0010206, "MSR_PERF_EVT_SEL3" }, //alias of 0xC0010003
+    { 0xC0010207, "MSR_PERF_CTR3" },     //alias of 0xC0010007
+    { 0xC0010208, "MSR_PERF_EVT_SEL4" }, //no alias
+    { 0xC0010209, "MSR_PERF_CTR4" },     //no alias
+    { 0xC001020A, "MSR_PERF_EVT_SEL5" }, //no alias
+    { 0xC001020B, "MSR_PERF_CTR5" },     //no alias
+
+    { 0xC0010299, "MSR_AMD_RAPL_POWER_UNIT" },
     { 0xC001029A, "MSR_AMD_CORE_ENERGY_STATUS" },
+    { 0xC001029B, "MSR_AMD_PKG_ENERGY_STATUS" },
 
     { 0xC0011029, "MSR_F10H_DECFG" }, //interesting msr to see if LFENCE is serializing on AMD
 
