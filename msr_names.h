@@ -18,8 +18,8 @@ static const struct msr_def msr_names[] = { // used in binary search, must be so
     { 0x00000048, "MSR_SPEC_CTRL" }, 
     { 0x00000049, "MSR_PRED_CTRL" }, 
     { 0x0000008B, "MSR_BIOS_SIGN_ID" }, // microcode version.
-    { 0x000000E7, "MSR_MPERF" }, 
-    { 0x000000E8, "MSR_APERF" }, 
+    { 0x000000E7, "MSR_MPERF" },
+    { 0x000000E8, "MSR_APERF" },
     { 0x000000FE, "MSR_MTRR_CAP" },
     { 0x0000010A, "MSR_ARCH_CAPABILITIES" }, // if you are exposing this on AMD, you shouldn't be.
     { 0x00000174, "MSR_SYSENTER_CS" },
