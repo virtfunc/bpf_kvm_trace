@@ -53,6 +53,23 @@ struct ring_buffer *trace_init_rb(handle_event_t handler, int flags, int verbose
     return rb;
 }
 
+void trace_apply_filters(unsigned int *filters, int count)
+{
+    if (!skel || count <= 0) return;
+
+    int config_fd = bpf_map__fd(skel->maps.filter_config);
+    __u32 key = 0;
+    __u32 val = 1;
+    bpf_map_update_elem(config_fd, &key, &val, BPF_ANY);
+
+    int map_fd = bpf_map__fd(skel->maps.filter_msr);
+    __u8 allowed = 1;
+    for (int i = 0; i < count; i++) {
+        __u32 msr_index = filters[i];
+        bpf_map_update_elem(map_fd, &msr_index, &allowed, BPF_ANY);
+    }
+}
+
 void trace_cleanup(void)
 {
     if (rb) ring_buffer__free(rb);
@@ -70,31 +87,33 @@ void trace_print(struct event *e, char prefix, unsigned long long current_time_n
     unsigned int ago_ms = (current_time_ns - e->ts) / 1000000;
     double ts_sec = (double)e->ts / 1000000000.0;
     const char *name = "";
+    char buf[256];
     
     switch (e->kind) {
         case EVENT_KIND_MSR: {
             const char *mode = e->type ? "WR" : "RD";
             name = get_msr_name(e->index);
             if (e->result) {
-                printf("%c%sMSR: 0x%08x RIP: 0x%016llx Value: FAULT (Except #%d)",
-                       prefix, mode, e->index, e->rip, e->exception);
+                snprintf(buf, sizeof(buf), "%c%sMSR: 0x%08x RIP: 0x%016llx FAULT (Except #%d)",
+                         prefix, mode, e->index, e->rip, e->exception);
             } else {
-                printf("%c%sMSR: 0x%08x RIP: 0x%016llx Value: 0x%016llx",
-                       prefix, mode, e->index, e->rip, e->value);
+                snprintf(buf, sizeof(buf), "%c%sMSR: 0x%08x RIP: 0x%016llx EAX: 0x%08llx EDX: 0x%08llx Value: 0x%016llx",
+                         prefix, mode, e->index, e->rip,
+                         e->value & 0xFFFFFFFF, e->value >> 32, e->value);
             } 
             break;
         }
         case EVENT_KIND_CPUID: {
             name = get_cpuid_name(e->index);
-            printf("%cCPUID Leaf: 0x%08x RIP: 0x%016llx  EAX: 0x%08llx EBX: 0x%08llx ECX: 0x%08llx EDX: 0x%08llx",
-                   prefix, e->index, e->rip,
-                   e->value & 0xFFFFFFFF, e->value >> 32,
-                   e->value_extra & 0xFFFFFFFF, e->value_extra >> 32);
+            snprintf(buf, sizeof(buf), "%cCPUID: 0x%08x RIP: 0x%016llx EAX: 0x%08llx EBX: 0x%08llx ECX: 0x%08llx EDX: 0x%08llx",
+                     prefix, e->index, e->rip,
+                     e->value & 0xFFFFFFFF, e->value >> 32,
+                     e->value_extra & 0xFFFFFFFF, e->value_extra >> 32);
             break;
         }
     }
 
-    // print trailing information
-    if (dedupe_mode) printf(" -> %7u ms ago (%s)\n", ago_ms, name);
-    else printf(" -> [%.6f] (%s)\n", ts_sec, name);
+    // print trailing information, pad to 106 columns so arrows align
+    if (dedupe_mode) printf("%-106s -> %7u ms ago (%s)\n", buf, ago_ms, name);
+    else printf("%-106s -> [%.6f] (%s)\n", buf, ts_sec, name);
 }

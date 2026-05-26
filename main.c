@@ -8,6 +8,8 @@
 #include <bpf/bpf.h>
 #include "trace.h"
 
+void trace_apply_filters(unsigned int *filters, int count);
+
 #define MAX_SEEN_INDICES 4096
 static unsigned int seen_indices[MAX_SEEN_INDICES];
 static int seen_count = 0;
@@ -127,6 +129,7 @@ static void usage(const char *prog)
     fprintf(stderr, "  -c, --cpuid      Trace CPUID instructions\n");
     fprintf(stderr, "  -d, --dedupe     Deduplicate events\n");
     fprintf(stderr, "  -v, --verbose    Log MTRR and Machine Check MSRs\n");
+    fprintf(stderr, "  -f, --filter     Only trace specific MSRs (can be used multiple times, e.g., -f 0x10 -f 0x3a)\n");
     fprintf(stderr, "  -h, --help       Show this help message\n");
 }
 
@@ -134,22 +137,34 @@ int main(int argc, char **argv)
 {
     struct ring_buffer *rb = NULL;
     int flags = 0;
+    #define MAX_FILTER_MSRS 256
+    unsigned int filter_msrs[MAX_FILTER_MSRS];
+    int filter_msrs_count = 0;
     int err;
     static struct option long_options[] = {
         {"dedupe", no_argument, 0, 'd'},
         {"msr", no_argument, 0, 'm'},
         {"cpuid", no_argument, 0, 'c'},
         {"verbose", no_argument, 0, 'v'},
+        {"filter", required_argument, 0, 'f'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
     int opt;
-    while ((opt = getopt_long(argc, argv, "dmcvh", long_options, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "dmcvhf:", long_options, NULL)) != -1) {
         switch (opt) {
         case 'd': dedupe_mode = 1; break;
         case 'm': flags |= TRACE_MSR; break;
         case 'c': flags |= TRACE_CPUID; break;
         case 'v': verbose = 1; break;
+        case 'f':
+            if (filter_msrs_count < MAX_FILTER_MSRS) {
+                filter_msrs[filter_msrs_count++] = strtoul(optarg, NULL, 0);
+            } else {
+                fprintf(stderr, "Too many MSR filters specified (max %d)\n", MAX_FILTER_MSRS);
+                return 1;
+            }
+            break;
         case 'h': usage(argv[0]); return 0;
         default: usage(argv[0]); return 1;
         }
@@ -163,6 +178,10 @@ int main(int argc, char **argv)
 
     rb = trace_init_rb(handle_event, flags, verbose);
     if (!rb) return 1;
+
+    if (filter_msrs_count > 0) {
+        trace_apply_filters(filter_msrs, filter_msrs_count);
+    }
 
     printf("Tracing...\n");
     int dropped_fd = trace_get_dropped_fd();

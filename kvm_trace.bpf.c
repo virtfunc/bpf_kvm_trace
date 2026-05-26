@@ -74,6 +74,20 @@ struct {
     __type(value, struct event);
 } pending_msr SEC(".maps");
 
+struct {
+    __uint(type, BPF_MAP_TYPE_HASH);
+    __uint(max_entries, 256);
+    __type(key, u32);
+    __type(value, u8);
+} filter_msr SEC(".maps");
+
+struct {
+    __uint(type, BPF_MAP_TYPE_ARRAY);
+    __uint(max_entries, 1);
+    __type(key, u32);
+    __type(value, u32);
+} filter_config SEC(".maps");
+
 SEC("tracepoint/kvm/kvm_exit")
 int tp_kvm_exit(struct trace_event_raw_kvm_exit *args) {
     u32 tid = bpf_get_current_pid_tgid();
@@ -85,15 +99,22 @@ int tp_kvm_exit(struct trace_event_raw_kvm_exit *args) {
 SEC("tracepoint/kvm/kvm_msr")
 int tp_kvm_msr(struct trace_event_raw_kvm_msr *args) {
 	u32 index = args->ecx;
+	u32 key0 = 0;
+	u32 *filter_enabled = bpf_map_lookup_elem(&filter_config, &key0);
 
-	if (!verbose) {
-		// MSR_MTRR_CAP, MSR_PAT, MSR_MTRR_DEF_TYPE, and ranges for variable and fixed MTRRs
-		if ((index >= 0x200 && index <= 0x2FF) || index == 0xFE) {
-			return 0;
-		}
-		// MCG_CAP, MCG_STATUS, MCG_CTL and MCi_* banks + AMD MCA banks (0xC0002000->0xC0002FFF)
-		if ((index >= 0x179 && index <= 0x17B) || (index >= 0x400 && index < (0x400 + 4 * 32)) || (index >= 0xC0002000 && index < 0xC0002FFF)) {
-			return 0;
+	if (filter_enabled && *filter_enabled) {
+		u8 *allowed = bpf_map_lookup_elem(&filter_msr, &index);
+		if (!allowed) return 0;
+	} else {
+		if (!verbose) {
+			// MSR_MTRR_CAP, MSR_PAT, MSR_MTRR_DEF_TYPE, and ranges for variable and fixed MTRRs
+			if ((index >= 0x200 && index <= 0x2FF) || index == 0xFE) {
+				return 0;
+			}
+			// MCG_CAP, MCG_STATUS, MCG_CTL and MCi_* banks + AMD MCA banks (0xC0002000->0xC0002FFF)
+			if ((index >= 0x179 && index <= 0x17B) || (index >= 0x400 && index < (0x400 + 4 * 32)) || (index >= 0xC0002000 && index < 0xC0002FFF)) {
+				return 0;
+			}
 		}
 	}
 

@@ -44,7 +44,7 @@ clean:
 	rm -f $(TARGET) $(BPF_C_OBJ) $(SKELETON) $(VMLINUX_H)
 
 run: all #assumes sudo
-	sudo ./$(TARGET) -dmv
+	sudo ./$(TARGET) -dmcv
 
 run_simple: all # assumes sudo
 	sudo ./$(TARGET) -dm
