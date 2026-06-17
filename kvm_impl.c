@@ -94,8 +94,9 @@ void trace_print(struct event *e, char prefix, unsigned long long current_time_n
             const char *mode = e->type ? "WR" : "RD";
             name = get_msr_name(e->index);
             if (e->result) {
-                snprintf(buf, sizeof(buf), "%c%sMSR: 0x%08x RIP: 0x%016llx FAULT (Except #%d)",
-                         prefix, mode, e->index, e->rip, e->exception);
+                snprintf(buf, sizeof(buf), "%c%sMSR: 0x%08x RIP: 0x%016llx FAULT (Except #%d) EAX: 0x%08llx EDX: 0x%08llx Value: 0x%016llx",
+                         prefix, mode, e->index, e->rip, e->exception,
+                         e->value & 0xFFFFFFFF, e->value >> 32, e->value);
             } else {
                 snprintf(buf, sizeof(buf), "%c%sMSR: 0x%08x RIP: 0x%016llx EAX: 0x%08llx EDX: 0x%08llx Value: 0x%016llx",
                          prefix, mode, e->index, e->rip,
