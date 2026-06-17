@@ -95,7 +95,7 @@ void trace_print(struct event *e, char prefix, unsigned long long current_time_n
             name = get_msr_name(e->index);
             char val_str[64];
             snprintf(val_str, sizeof(val_str), "0x%016llx", e->value);
-             // if we have an MSR fault, lets adjust the value
+            // if we have an MSR fault, lets adjust the value
             if (e->result) snprintf(val_str, sizeof(val_str), "FAULT (Except #%d)", e->exception);
             snprintf(buf, sizeof(buf), "%c%sMSR: 0x%08x RIP: 0x%016llx EAX: 0x%08llx EDX: 0x%08llx Value: %s",
                      prefix, mode, e->index, e->rip,
