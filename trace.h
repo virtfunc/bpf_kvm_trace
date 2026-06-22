@@ -4,17 +4,21 @@
 #define TRACE_MSR   (1 << 0)
 #define TRACE_CPUID (1 << 1)
 
+enum event_type {
+    RDMSR = 0,
+    WRMSR = 1,
+    RDMSR_FAULT = 2,
+    WRMSR_FAULT = 3,
+    CPUID = 4,
+    CPUID_FAULT = 5
+};
+
 struct event {
     unsigned long long ts;
     unsigned int index;      // Generic index (e.g., MSR ECX or CPUID leaf)
     unsigned long long value;
     unsigned long long value_extra;
-    unsigned int type;       // Generic type (e.g., 0=RD, 1=WR)
-    enum event_kind {
-        EVENT_KIND_MSR = 0,
-        EVENT_KIND_CPUID = 1,
-    } kind; // 0=MSR, 1=CPUID
-    unsigned int result;     // 0 = OK, 1 = FAULT
+    enum event_type type;    // Combines type, kind, result
     unsigned int exception;
     unsigned long long rip;
 };

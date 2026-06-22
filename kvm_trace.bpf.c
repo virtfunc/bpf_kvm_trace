@@ -123,8 +123,7 @@ int tp_kvm_msr(struct trace_event_raw_kvm_msr *args) {
     e.ts = bpf_ktime_get_ns();
 	e.index = index;
     e.value = args->data;
-    e.type = args->write;
-    e.kind = EVENT_KIND_MSR;
+    e.type = args->write ? WRMSR : RDMSR;
     u64 *rip = bpf_map_lookup_elem(&exit_rip, &tid);
     if (rip) e.rip = *rip;
     bpf_map_update_elem(&pending_msr, &tid, &e, BPF_ANY);
@@ -140,7 +139,15 @@ static void submit_msr(struct event *e, int result, int exception) {
         return;
     }
     *out = *e;
-    out->result = result;
+    if (result) {
+        if (out->type == RDMSR) {
+            out->type = RDMSR_FAULT;
+        } else if (out->type == WRMSR) {
+            out->type = WRMSR_FAULT;
+        } else if (out->type == CPUID) {
+            out->type = CPUID_FAULT;
+        }
+    }
     out->exception = exception;
     bpf_ringbuf_submit(out, 0);
 }
@@ -169,7 +176,7 @@ int tp_kvm_cpuid(struct trace_event_raw_kvm_cpuid *args) {
     e.index = args->func;
     e.value = (u64)(u32)args->eax | ((u64)(u32)args->ebx << 32);
     e.value_extra = (u64)(u32)args->ecx | ((u64)(u32)args->edx << 32);
-    e.kind = EVENT_KIND_CPUID;
+    e.type = CPUID;
     u32 tid = bpf_get_current_pid_tgid();
     u64 *rip = bpf_map_lookup_elem(&exit_rip, &tid);
     if (rip) e.rip = *rip;

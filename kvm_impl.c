@@ -88,26 +88,39 @@ void trace_print(struct event *e, char prefix, unsigned long long current_time_n
     double ts_sec = (double)e->ts / 1000000000.0;
     const char *name = "";
     char buf[256];
+
+    //inputs: e->kind (msr/cpuid), e->result (fault/nofault), e->type, (dedupe_mode)
     
-    switch (e->kind) {
-        case EVENT_KIND_MSR: {
-            const char *mode = e->type ? "WR" : "RD";
+    
+    switch (e->type) {
+        case RDMSR:
+        case WRMSR:
+        case RDMSR_FAULT:
+        case WRMSR_FAULT: {
+            const char *mode = (e->type == WRMSR || e->type == WRMSR_FAULT) ? "WR" : "RD";
             name = get_msr_name(e->index);
             char val_str[64];
             snprintf(val_str, sizeof(val_str), "0x%016llx", e->value);
-            // if we have an MSR fault, lets adjust the value
-            if (e->result) snprintf(val_str, sizeof(val_str), "FAULT (Except #%d)", e->exception);
+            if (e->type == RDMSR_FAULT || e->type == WRMSR_FAULT) {
+                snprintf(val_str, sizeof(val_str), "FAULT (Except #%d)", e->exception);
+            }
             snprintf(buf, sizeof(buf), "%c%sMSR: 0x%08x RIP: 0x%016llx EAX: 0x%08llx EDX: 0x%08llx Value: %s",
                      prefix, mode, e->index, e->rip,
                      e->value & 0xFFFFFFFF, e->value >> 32, val_str);
             break;
         }
-        case EVENT_KIND_CPUID: {
+        case CPUID:
+        case CPUID_FAULT: {
             name = get_cpuid_name(e->index);
-            snprintf(buf, sizeof(buf), "%cCPUID: 0x%08x RIP: 0x%016llx EAX: 0x%08llx EBX: 0x%08llx ECX: 0x%08llx EDX: 0x%08llx",
-                     prefix, e->index, e->rip,
-                     e->value & 0xFFFFFFFF, e->value >> 32,
-                     e->value_extra & 0xFFFFFFFF, e->value_extra >> 32);
+            if (e->type == CPUID_FAULT) {
+                snprintf(buf, sizeof(buf), "%cCPUID: 0x%08x RIP: 0x%016llx FAULT (Except #%d)",
+                         prefix, e->index, e->rip, e->exception);
+            } else {
+                snprintf(buf, sizeof(buf), "%cCPUID: 0x%08x RIP: 0x%016llx EAX: 0x%08llx EBX: 0x%08llx ECX: 0x%08llx EDX: 0x%08llx",
+                         prefix, e->index, e->rip,
+                         e->value & 0xFFFFFFFF, e->value >> 32,
+                         e->value_extra & 0xFFFFFFFF, e->value_extra >> 32);
+            }
             break;
         }
     }
