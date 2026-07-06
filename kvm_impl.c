@@ -87,45 +87,36 @@ void trace_print(struct event *e, char prefix, unsigned long long current_time_n
     unsigned int ago_ms = (current_time_ns - e->ts) / 1000000;
     double ts_sec = (double)e->ts / 1000000000.0;
     const char *name = "";
+    const char *type = "";
+    char value[64] = "";
     char buf[256];
 
-    //inputs: e->kind (msr/cpuid), e->result (fault/nofault), e->type, (dedupe_mode)
-    
-    
     switch (e->type) {
-        case RDMSR:
-        case WRMSR:
-        case RDMSR_FAULT:
-        case WRMSR_FAULT: {
-            const char *mode = (e->type == WRMSR || e->type == WRMSR_FAULT) ? "WR" : "RD";
-            name = get_msr_name(e->index);
-            char val_str[64];
-            snprintf(val_str, sizeof(val_str), "0x%016llx", e->value);
-            if (e->type == RDMSR_FAULT || e->type == WRMSR_FAULT) {
-                snprintf(val_str, sizeof(val_str), "FAULT (Except #%d)", e->exception);
-            }
-            snprintf(buf, sizeof(buf), "%c%sMSR: 0x%08x RIP: 0x%016llx EAX: 0x%08llx EDX: 0x%08llx Value: %s",
-                     prefix, mode, e->index, e->rip,
-                     e->value & 0xFFFFFFFF, e->value >> 32, val_str);
-            break;
-        }
-        case CPUID:
-        case CPUID_FAULT: {
-            name = get_cpuid_name(e->index);
-            if (e->type == CPUID_FAULT) {
-                snprintf(buf, sizeof(buf), "%cCPUID: 0x%08x RIP: 0x%016llx FAULT (Except #%d)",
-                         prefix, e->index, e->rip, e->exception);
-            } else {
-                snprintf(buf, sizeof(buf), "%cCPUID: 0x%08x RIP: 0x%016llx EAX: 0x%08llx EBX: 0x%08llx ECX: 0x%08llx EDX: 0x%08llx",
-                         prefix, e->index, e->rip,
-                         e->value & 0xFFFFFFFF, e->value >> 32,
-                         e->value_extra & 0xFFFFFFFF, e->value_extra >> 32);
-            }
-            break;
-        }
+    case RDMSR:
+    case WRMSR: {
+        name = get_msr_name(e->index);
+        type = (e->type == RDMSR) ? "RDMSR" : "WRMSR";
+        snprintf(value, sizeof(value), "EAX=0x%08x EDX=0x%08x VAL=0x%016llx",e->eax,e->edx, ((unsigned long long)e->edx << 32) | e->eax);
+        break;
     }
-
-    // print trailing information, pad to 106 columns so arrows align
-    if (dedupe_mode) printf("%-106s -> %7u ms ago (%s)\n", buf, ago_ms, name);
-    else printf("%-106s -> [%.6f] (%s)\n", buf, ts_sec, name);
+    case RDMSR_FAULT:
+    case WRMSR_FAULT:
+        name = get_msr_name(e->index);
+        type = (e->type == RDMSR_FAULT) ? "RDMSR" : "WRMSR";
+        snprintf(value, sizeof(value), "Fault #%u", e->exception);
+        break;
+    case CPUID:
+    case CPUID_FAULT:
+        name = get_cpuid_name(e->index);
+        type = "CPUID";
+        (e->type == CPUID_FAULT)
+        ? (void)snprintf(value, sizeof(value), "Fault #%u", e->exception)
+        : (void)snprintf(value, sizeof(value), "EAX=0x%08x EBX=0x%08x ECX=0x%08x EDX=0x%08x", e->eax, e->ebx, e->ecx, e->edx);
+        break;
+    default: exit(TRACE_UNKNOWN_TYPE); //something went horribly wrong
+    }
+    snprintf(buf, sizeof(buf), "%c%-6s0x%08x RIP=0x%016llx %s", prefix, type, e->index, e->rip, value);
+    dedupe_mode //flame the style all you want
+        ? (void)printf("%-106s -> %7u ms ago (%s)\n", buf, ago_ms, name)
+        : (void)printf("%-106s -> [%.6f] (%s)\n", buf, ts_sec, name);
 }

@@ -3,6 +3,7 @@
 
 #define TRACE_MSR   (1 << 0)
 #define TRACE_CPUID (1 << 1)
+#define TRACE_UNKNOWN_TYPE 1234
 
 enum event_type {
     RDMSR = 0,
@@ -16,8 +17,10 @@ enum event_type {
 struct event {
     unsigned long long ts;
     unsigned int index;      // Generic index (e.g., MSR ECX or CPUID leaf)
-    unsigned long long value;
-    unsigned long long value_extra;
+    unsigned int eax;
+    unsigned int ebx;
+    unsigned int ecx;
+    unsigned int edx;
     enum event_type type;    // Combines type, kind, result
     unsigned int exception;
     unsigned long long rip;
