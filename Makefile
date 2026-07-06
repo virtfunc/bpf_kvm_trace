@@ -12,7 +12,7 @@ BPF_CFLAGS := -g -O2 -target bpf -D__TARGET_ARCH_x86 -Wno-missing-declarations
 # Source and object files
 TARGET := kvm_trace
 USER_SRCS := main.c kvm_impl.c
-USER_HDRS := msr_names.h trace.h cpuid_names.h
+USER_HDRS := msr_names.h trace.h cpuid_names.h io_port_names.h
 BPF_C_SRC := kvm_trace.bpf.c
 BPF_C_OBJ := $(BPF_C_SRC:.bpf.c=.bpf.o)
 SKELETON := $(BPF_C_SRC:.bpf.c=.skel.h)
@@ -44,7 +44,7 @@ clean:
 	rm -f $(TARGET) $(BPF_C_OBJ) $(SKELETON) $(VMLINUX_H)
 
 run: all #assumes sudo
-	sudo ./$(TARGET) -dmcv
+	sudo ./$(TARGET) -dmciv
 
 run_simple: all # assumes sudo
 	sudo ./$(TARGET) -dm

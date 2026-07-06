@@ -47,6 +47,15 @@ struct trace_event_raw_kvm_cpuid {
     bool found;
 };
 
+struct trace_event_raw_kvm_pio {
+    struct trace_entry ent;
+    u32 rw;
+    u32 port;
+    u32 size;
+    u32 count;
+    u32 val;
+};
+
 // Maps
 struct {
     __uint(type, BPF_MAP_TYPE_RINGBUF);
@@ -94,6 +103,18 @@ int tp_kvm_exit(struct trace_event_raw_kvm_exit *args) {
     u64 rip = args->rip;
     bpf_map_update_elem(&exit_rip, &tid, &rip, BPF_ANY);
     return 0;
+}
+
+static void submit_event(struct event *e) {
+    struct event *out = bpf_ringbuf_reserve(&rb, sizeof(*out), 0);
+    if (!out) {
+        u32 key = 0;
+        u64 *val = bpf_map_lookup_elem(&dropped, &key);
+        if (val) __sync_fetch_and_add(val, 1);
+        return;
+    }
+    *out = *e;
+    bpf_ringbuf_submit(out, 0);
 }
 
 SEC("tracepoint/kvm/kvm_msr")
@@ -184,5 +205,21 @@ int tp_kvm_cpuid(struct trace_event_raw_kvm_cpuid *args) {
     u64 *rip = bpf_map_lookup_elem(&exit_rip, &tid);
     if (rip) e.rip = *rip;
     submit_msr(&e, 0, 0); // Reuse submit logic
+    return 0;
+}
+
+SEC("tracepoint/kvm/kvm_pio")
+int tp_kvm_pio(struct trace_event_raw_kvm_pio *args) {
+    struct event e = {};
+    e.ts = bpf_ktime_get_ns();
+    e.index = args->port;
+    e.eax = args->val;
+    e.size = args->size;
+    e.count = args->count;
+    e.type = args->rw ? IO_OUT : IO_IN;
+    u32 tid = bpf_get_current_pid_tgid();
+    u64 *rip = bpf_map_lookup_elem(&exit_rip, &tid);
+    if (rip) e.rip = *rip;
+    submit_event(&e);
     return 0;
 }

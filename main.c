@@ -127,6 +127,7 @@ static void usage(const char *prog)
     fprintf(stderr, "\nOptions:\n");
     fprintf(stderr, "  -m, --msr        Trace MSR instructions\n");
     fprintf(stderr, "  -c, --cpuid      Trace CPUID instructions\n");
+    fprintf(stderr, "  -i, --io         Trace IO port instructions (IN/OUT)\n");
     fprintf(stderr, "  -d, --dedupe     Deduplicate events\n");
     fprintf(stderr, "  -v, --verbose    Log MTRR and Machine Check MSRs\n");
     fprintf(stderr, "  -f, --filter     Only trace specific MSRs (can be used multiple times, e.g., -f 0x10 -f 0x3a)\n");
@@ -145,17 +146,19 @@ int main(int argc, char **argv)
         {"dedupe", no_argument, 0, 'd'},
         {"msr", no_argument, 0, 'm'},
         {"cpuid", no_argument, 0, 'c'},
+        {"io", no_argument, 0, 'i'},
         {"verbose", no_argument, 0, 'v'},
         {"filter", required_argument, 0, 'f'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
     int opt;
-    while ((opt = getopt_long(argc, argv, "dmcvhf:", long_options, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "dmcivhf:", long_options, NULL)) != -1) {
         switch (opt) {
         case 'd': dedupe_mode = 1; break;
         case 'm': flags |= TRACE_MSR; break;
         case 'c': flags |= TRACE_CPUID; break;
+        case 'i': flags |= TRACE_IO; break;
         case 'v': verbose = 1; break;
         case 'f':
             if (filter_msrs_count < MAX_FILTER_MSRS) {

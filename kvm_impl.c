@@ -6,6 +6,7 @@
 #include "kvm_trace.skel.h"
 #include "msr_names.h"
 #include "cpuid_names.h"
+#include "io_port_names.h"
 
 static struct kvm_trace_bpf *skel = NULL;
 static struct ring_buffer *rb = NULL;
@@ -39,7 +40,11 @@ struct ring_buffer *trace_init_rb(handle_event_t handler, int flags, int verbose
         skel->links.tp_kvm_cpuid = bpf_program__attach(skel->progs.tp_kvm_cpuid);
     }
 
-    if (flags & (TRACE_MSR | TRACE_CPUID)) {
+    if (flags & TRACE_IO) {
+        skel->links.tp_kvm_pio = bpf_program__attach(skel->progs.tp_kvm_pio);
+    }
+
+    if (flags & (TRACE_MSR | TRACE_CPUID | TRACE_IO)) {
         skel->links.tp_kvm_exit = bpf_program__attach(skel->progs.tp_kvm_exit);
     }
 
@@ -112,6 +117,12 @@ void trace_print(struct event *e, char prefix, unsigned long long current_time_n
         (e->type == CPUID_FAULT)
         ? (void)snprintf(value, sizeof(value), "Fault #%u", e->exception)
         : (void)snprintf(value, sizeof(value), "EAX=0x%08x EBX=0x%08x ECX=0x%08x EDX=0x%08x", e->eax, e->ebx, e->ecx, e->edx);
+        break;
+    case IO_IN:
+    case IO_OUT:
+        name = get_io_port_name(e->index);
+        type = (e->type == IO_IN) ? "IN" : "OUT";
+        snprintf(value, sizeof(value), "VAL=0x%08x SIZE=%u COUNT=%u", e->eax, e->size, e->count);
         break;
     default: exit(TRACE_UNKNOWN_TYPE); //something went horribly wrong
     }
