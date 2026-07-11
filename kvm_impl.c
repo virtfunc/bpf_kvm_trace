@@ -128,6 +128,6 @@ void trace_print(struct event *e, char prefix, unsigned long long current_time_n
     }
     snprintf(buf, sizeof(buf), "%c%-6s0x%08x RIP=0x%016llx %s", prefix, type, e->index, e->rip, value);
     dedupe_mode //flame the style all you want
-        ? (void)printf("%-106s -> %7u ms ago (%s)\n", buf, ago_ms, name)
+        ? (void)printf("%-106s -> %7u ms ago (%s)\033[K\n", buf, ago_ms, name)
         : (void)printf("%-106s -> [%.6f] (%s)\n", buf, ts_sec, name);
 }
