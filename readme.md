@@ -1,4 +1,4 @@
-a simple sloppy program to trace the RD/WRMSR and CPUID inside a KVM virtual machine using BPF.
+A simple TUI program to trace the RD/WRMSR, CPUID, and IO ports inside a KVM virtual machine using BPF.
 
 # build
 `$ make`
@@ -6,7 +6,7 @@ a simple sloppy program to trace the RD/WRMSR and CPUID inside a KVM virtual mac
 To install dependencies on Arch Linux:
 `$ make install-deps`
 
-# dedupe mode (works with msr and cpuid trace modes)
+# dedupe mode (works for any of the below logged vmexit sources)
 `# kvm_trace -d`
 
 # cpuid mode
@@ -15,7 +15,10 @@ To install dependencies on Arch Linux:
 # msr mode
 `# kvm_trace -m`
 
-# verbose (msr mode)
+# IO port mode
+`# kvm_trace -i`
+
+## verbose msr mode (shows all traced MSRs)
 `# kvm_trace -m --verbose`
 
 # simple shell script (older)
