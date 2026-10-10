@@ -297,19 +297,21 @@ static void usage(const char *prog)
 {
     fprintf(stderr, "Usage: %s [options]\n", prog);
     fprintf(stderr, "\nOptions:\n");
-    fprintf(stderr, "  -m, --msr        Trace MSR instructions\n");
-    fprintf(stderr, "  -c, --cpuid      Trace CPUID instructions\n");
-    fprintf(stderr, "  -i, --io         Trace IO port instructions (IN/OUT)\n");
-    fprintf(stderr, "  -d, --dedupe     Deduplicate events\n");
-    fprintf(stderr, "  -v, --verbose    Log MTRR and Machine Check MSRs\n");
-    fprintf(stderr, "  -f, --filter     Only trace specific MSRs (can be used multiple times, e.g., -f 0x10 -f 0x3a)\n");
-    fprintf(stderr, "  -h, --help       Show this help message\n");
+    fprintf(stderr, "  -m, --msr         Trace MSR instructions\n");
+    fprintf(stderr, "  -c, --cpuid       Trace CPUID instructions\n");
+    fprintf(stderr, "  -i, --io          Trace IO port instructions (IN/OUT)\n");
+    fprintf(stderr, "  -e, --ecam [addr] Trace ECAM reads/writes (default base: 0xe0000000)\n");
+    fprintf(stderr, "  -d, --dedupe      Deduplicate events\n");
+    fprintf(stderr, "  -v, --verbose     Log MTRR and Machine Check MSRs\n");
+    fprintf(stderr, "  -f, --filter      Only trace specific MSRs (can be used multiple times, e.g., -f 0x10 -f 0x3a)\n");
+    fprintf(stderr, "  -h, --help        Show this help message\n");
 }
 
 int main(int argc, char **argv)
 {
     struct ring_buffer *rb = NULL;
     int flags = 0;
+    unsigned long long ecam_base = 0xe0000000ULL;
     #define MAX_FILTER_MSRS 256
     unsigned int filter_msrs[MAX_FILTER_MSRS];
     int filter_msrs_count = 0;
@@ -319,18 +321,34 @@ int main(int argc, char **argv)
         {"msr", no_argument, 0, 'm'},
         {"cpuid", no_argument, 0, 'c'},
         {"io", no_argument, 0, 'i'},
+        {"ecam", optional_argument, 0, 'e'},
+        {"ecam-base", required_argument, 0, 'E'},
         {"verbose", no_argument, 0, 'v'},
         {"filter", required_argument, 0, 'f'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
     int opt;
-    while ((opt = getopt_long(argc, argv, "dmcivhf:", long_options, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "dmcive::E:hf:", long_options, NULL)) != -1) {
         switch (opt) {
         case 'd': dedupe_mode = 1; break;
         case 'm': flags |= TRACE_MSR; break;
         case 'c': flags |= TRACE_CPUID; break;
         case 'i': flags |= TRACE_IO; break;
+        case 'e':
+            flags |= TRACE_ECAM;
+            if (optarg) {
+                ecam_base = strtoull(optarg, NULL, 0);
+            } else if (optind < argc && argv[optind][0] != '-') {
+                char *endptr;
+                unsigned long long val = strtoull(argv[optind], &endptr, 0);
+                if (endptr != argv[optind]) {
+                    ecam_base = val;
+                    optind++;
+                }
+            }
+            break;
+        case 'E': ecam_base = strtoull(optarg, NULL, 0); break;
         case 'v': verbose = 1; break;
         case 'f':
             if (filter_msrs_count < MAX_FILTER_MSRS) {
@@ -351,7 +369,7 @@ int main(int argc, char **argv)
     }
     libbpf_set_print(NULL);
 
-    rb = trace_init_rb(handle_event, flags, verbose);
+    rb = trace_init_rb(handle_event, flags, verbose, ecam_base);
     if (!rb) return 1;
 
     if (filter_msrs_count > 0) {

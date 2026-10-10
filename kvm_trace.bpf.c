@@ -6,6 +6,8 @@
 char LICENSE[] SEC("license") = "GPL";
 
 volatile const bool verbose = false;
+volatile const __u64 ecam_base = 0xe0000000ULL;
+volatile const __u64 ecam_size = 0x10000000ULL;
 
 struct trace_event_raw_kvm_msr {
     struct trace_entry ent;
@@ -54,6 +56,14 @@ struct trace_event_raw_kvm_pio {
     u32 size;
     u32 count;
     u32 val;
+};
+
+struct trace_event_raw_kvm_mmio {
+    struct trace_entry ent;
+    u32 type;
+    u32 len;
+    u64 gpa;
+    u64 val;
 };
 
 // Maps
@@ -220,6 +230,40 @@ int tp_kvm_pio(struct trace_event_raw_kvm_pio *args) {
     u32 tid = bpf_get_current_pid_tgid();
     u64 *rip = bpf_map_lookup_elem(&exit_rip, &tid);
     if (rip) e.rip = *rip;
+    submit_event(&e);
+    return 0;
+}
+
+SEC("tracepoint/kvm/kvm_mmio")
+int tp_kvm_mmio(struct trace_event_raw_kvm_mmio *args) {
+    if (args->gpa < ecam_base || args->gpa >= ecam_base + ecam_size)
+        return 0;
+
+    if (args->type != 1 && args->type != 2)
+        return 0;
+
+    u64 offset = args->gpa - ecam_base;
+    u32 bus = (offset >> 20) & 0xff;
+    u32 dev = (offset >> 15) & 0x1f;
+    u32 func = (offset >> 12) & 0x7;
+    u32 reg = offset & 0xfff;
+
+    struct event e = {};
+    e.ts = bpf_ktime_get_ns();
+    e.gpa = args->gpa;
+    e.index = (u32)args->gpa;
+    e.eax = (u32)(args->val & 0xffffffff);
+    e.edx = (u32)(args->val >> 32);
+    e.ebx = (bus << 16) | (dev << 8) | func;
+    e.ecx = reg;
+    e.size = args->len;
+    e.count = 1;
+    e.type = (args->type == 1) ? ECAM_READ : ECAM_WRITE;
+
+    u32 tid = bpf_get_current_pid_tgid();
+    u64 *rip = bpf_map_lookup_elem(&exit_rip, &tid);
+    if (rip) e.rip = *rip;
+
     submit_event(&e);
     return 0;
 }

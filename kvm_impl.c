@@ -7,11 +7,12 @@
 #include "msr_names.h"
 #include "cpuid_names.h"
 #include "io_port_names.h"
+#include "pci_names.h"
 
 static struct kvm_trace_bpf *skel = NULL;
 static struct ring_buffer *rb = NULL;
 
-struct ring_buffer *trace_init_rb(handle_event_t handler, int flags, int verbose)
+struct ring_buffer *trace_init_rb(handle_event_t handler, int flags, int verbose, unsigned long long ecam_base)
 {
     int err;
 
@@ -22,6 +23,8 @@ struct ring_buffer *trace_init_rb(handle_event_t handler, int flags, int verbose
     }
 
     skel->rodata->verbose = verbose;
+    skel->rodata->ecam_base = ecam_base;
+    skel->rodata->ecam_size = 0x10000000ULL;
 
     err = kvm_trace_bpf__load(skel);
     if (err) {
@@ -44,7 +47,11 @@ struct ring_buffer *trace_init_rb(handle_event_t handler, int flags, int verbose
         skel->links.tp_kvm_pio = bpf_program__attach(skel->progs.tp_kvm_pio);
     }
 
-    if (flags & (TRACE_MSR | TRACE_CPUID | TRACE_IO)) {
+    if (flags & TRACE_ECAM) {
+        skel->links.tp_kvm_mmio = bpf_program__attach(skel->progs.tp_kvm_mmio);
+    }
+
+    if (flags & (TRACE_MSR | TRACE_CPUID | TRACE_IO | TRACE_ECAM)) {
         skel->links.tp_kvm_exit = bpf_program__attach(skel->progs.tp_kvm_exit);
     }
 
@@ -93,7 +100,7 @@ void trace_print(struct event *e, char prefix, unsigned long long current_time_n
     double ts_sec = (double)e->ts / 1000000000.0;
     const char *name = "";
     const char *type = "";
-    char value[64] = "";
+    char value[128] = "";
     char buf[256];
 
     switch (e->type) {
@@ -124,9 +131,35 @@ void trace_print(struct event *e, char prefix, unsigned long long current_time_n
         type = (e->type == IO_IN) ? "IN" : "OUT";
         snprintf(value, sizeof(value), "VAL=0x%08x SIZE=%u COUNT=%u", e->eax, e->size, e->count);
         break;
+    case ECAM_READ:
+    case ECAM_WRITE: {
+        unsigned int bus = (e->ebx >> 16) & 0xff;
+        unsigned int dev = (e->ebx >> 8) & 0x1f;
+        unsigned int func = e->ebx & 0x07;
+        unsigned int reg = e->ecx & 0xfff;
+        unsigned long long val = ((unsigned long long)e->edx << 32) | e->eax;
+        name = get_pci_reg_name(reg);
+        type = (e->type == ECAM_READ) ? "ECAM_R" : "ECAM_W";
+        if (e->size == 8) {
+            snprintf(value, sizeof(value), "BDF=%02x:%02x.%x ADDR=0x%03x VAL=0x%016llx SIZE=%u",
+                     bus, dev, func, reg, val, e->size);
+        } else {
+            snprintf(value, sizeof(value), "BDF=%02x:%02x.%x ADDR=0x%03x VAL=0x%08llx SIZE=%u",
+                     bus, dev, func, reg, val, e->size);
+        }
+        break;
+    }
     default: exit(TRACE_UNKNOWN_TYPE); //something went horribly wrong
     }
-    snprintf(buf, sizeof(buf), "%c%-6s0x%08x RIP=0x%016llx %s", prefix, type, e->index, e->rip, value);
+    if (e->type == ECAM_READ || e->type == ECAM_WRITE) {
+        if (e->gpa > 0xffffffffULL) {
+            snprintf(buf, sizeof(buf), "%c%-6s 0x%016llx RIP=0x%016llx %s", prefix, type, e->gpa, e->rip, value);
+        } else {
+            snprintf(buf, sizeof(buf), "%c%-6s 0x%08x RIP=0x%016llx %s", prefix, type, (unsigned int)e->gpa, e->rip, value);
+        }
+    } else {
+        snprintf(buf, sizeof(buf), "%c%-6s0x%08x RIP=0x%016llx %s", prefix, type, e->index, e->rip, value);
+    }
     dedupe_mode //flame the style all you want
         ? (void)printf("%-106s -> %7u ms ago (%s)\033[K\n", buf, ago_ms, name)
         : (void)printf("%-106s -> [%.6f] (%s)\n", buf, ts_sec, name);
