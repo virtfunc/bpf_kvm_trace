@@ -23,7 +23,6 @@ static struct event buffered_events[MAX_BUFFERED_EVENTS];
 static int buffered_count = 0;
 static unsigned long long userspace_drops = 0;
 static int dedupe_mode = 0;
-static int verbose = 0;
 
 static struct event unique_events[MAX_SEEN_INDICES];
 static int unique_count = 0;
@@ -302,7 +301,6 @@ static void usage(const char *prog)
     fprintf(stderr, "  -i, --io          Trace IO port instructions (IN/OUT)\n");
     fprintf(stderr, "  -e, --ecam [addr] Trace ECAM reads/writes (default base: 0xe0000000)\n");
     fprintf(stderr, "  -d, --dedupe      Deduplicate events\n");
-    fprintf(stderr, "  -v, --verbose     Log MTRR and Machine Check MSRs\n");
     fprintf(stderr, "  -f, --filter      Only trace specific MSRs (can be used multiple times, e.g., -f 0x10 -f 0x3a)\n");
     fprintf(stderr, "  -h, --help        Show this help message\n");
 }
@@ -323,7 +321,6 @@ int main(int argc, char **argv)
         {"io", no_argument, 0, 'i'},
         {"ecam", optional_argument, 0, 'e'},
         {"ecam-base", required_argument, 0, 'E'},
-        {"verbose", no_argument, 0, 'v'},
         {"filter", required_argument, 0, 'f'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
@@ -349,7 +346,6 @@ int main(int argc, char **argv)
             }
             break;
         case 'E': ecam_base = strtoull(optarg, NULL, 0); break;
-        case 'v': verbose = 1; break;
         case 'f':
             if (filter_msrs_count < MAX_FILTER_MSRS) {
                 filter_msrs[filter_msrs_count++] = strtoul(optarg, NULL, 0);
@@ -369,7 +365,7 @@ int main(int argc, char **argv)
     }
     libbpf_set_print(NULL);
 
-    rb = trace_init_rb(handle_event, flags, verbose, ecam_base);
+    rb = trace_init_rb(handle_event, flags, ecam_base);
     if (!rb) return 1;
 
     if (filter_msrs_count > 0) {

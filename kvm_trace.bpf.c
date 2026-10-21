@@ -5,7 +5,6 @@
 
 char LICENSE[] SEC("license") = "GPL";
 
-volatile const bool verbose = false;
 volatile const __u64 ecam_base = 0xe0000000ULL;
 volatile const __u64 ecam_size = 0x10000000ULL;
 
@@ -136,17 +135,6 @@ int tp_kvm_msr(struct trace_event_raw_kvm_msr *args) {
 	if (filter_enabled && *filter_enabled) {
 		u8 *allowed = bpf_map_lookup_elem(&filter_msr, &index);
 		if (!allowed) return 0;
-	} else {
-		if (!verbose) {
-			// MSR_MTRR_CAP, MSR_PAT, MSR_MTRR_DEF_TYPE, and ranges for variable and fixed MTRRs
-			if ((index >= 0x200 && index <= 0x2FF) || index == 0xFE) {
-				return 0;
-			}
-			// MCG_CAP, MCG_STATUS, MCG_CTL and MCi_* banks + AMD MCA banks (0xC0002000->0xC0002FFF)
-			if ((index >= 0x179 && index <= 0x17B) || (index >= 0x400 && index < (0x400 + 4 * 32)) || (index >= 0xC0002000 && index < 0xC0002FFF)) {
-				return 0;
-			}
-		}
 	}
 
     u32 tid = bpf_get_current_pid_tgid();

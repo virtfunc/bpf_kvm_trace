@@ -24,9 +24,6 @@ To install dependencies on Arch Linux:
 ### custom ECAM base address
 `# kvm_trace -e 0xb0000000`
 
-### verbose msr mode (shows all traced MSRs)
-`# kvm_trace -m --verbose`
-
 ## simple shell script (older)
 
 `# ./msr_trace_kvm.sh`

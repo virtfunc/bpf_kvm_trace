@@ -12,7 +12,7 @@
 static struct kvm_trace_bpf *skel = NULL;
 static struct ring_buffer *rb = NULL;
 
-struct ring_buffer *trace_init_rb(handle_event_t handler, int flags, int verbose, unsigned long long ecam_base)
+struct ring_buffer *trace_init_rb(handle_event_t handler, int flags, unsigned long long ecam_base)
 {
     int err;
 
@@ -22,7 +22,6 @@ struct ring_buffer *trace_init_rb(handle_event_t handler, int flags, int verbose
         return NULL;
     }
 
-    skel->rodata->verbose = verbose;
     skel->rodata->ecam_base = ecam_base;
     skel->rodata->ecam_size = 0x10000000ULL;
 
